@@ -84,10 +84,8 @@
       CONTACTOR: 'КОНТАКТОР'
     };
 
-    // Items that can be removed by the user even if added automatically
     const OPTIONAL_ITEMS = ['ec01028', 'ec01011', 'ec01063'];
 
-    // Raw Boiler Database (All Brands)
     const RAW_BOILER_BRANDS = [
       { name: 'ACV', models: [{ name: 'Alfa Sprint', connectionType: ConnectionType.RELAY }, { name: 'Alfa Comfort E', connectionType: ConnectionType.RELAY }, { name: 'BIOmax', connectionType: ConnectionType.RELAY }, { name: 'Compact A', connectionType: ConnectionType.RELAY }, { name: 'Delta Performance', connectionType: ConnectionType.RELAY }, { name: 'Delta Pro', connectionType: ConnectionType.RELAY }, { name: 'E-Tech', connectionType: ConnectionType.RELAY }, { name: 'ETS 9-24', connectionType: ConnectionType.RELAY }, { name: 'Heat Master N', connectionType: ConnectionType.RELAY }, { name: 'HR Solo', connectionType: ConnectionType.OPENTHERM }, { name: 'HRE eco', connectionType: ConnectionType.OPENTHERM }, { name: 'Kompakt HRE eco', connectionType: ConnectionType.OPENTHERM }, { name: 'N1', connectionType: ConnectionType.RELAY }, { name: 'N2', connectionType: ConnectionType.RELAY }, { name: 'N3', connectionType: ConnectionType.RELAY }, { name: 'N-Mini', connectionType: ConnectionType.RELAY }, { name: 'Prestige 42-120 Solo', connectionType: ConnectionType.RELAY }, { name: 'Prestige Excellence 18 - 32 Mklll', connectionType: ConnectionType.RELAY }, { name: 'TKAN 1', connectionType: ConnectionType.RELAY }, { name: 'TKAN 2', connectionType: ConnectionType.RELAY }] },
       { name: 'AEG', models: [{ name: 'GBA', connectionType: ConnectionType.RELAY }, { name: 'GBT', connectionType: ConnectionType.RELAY }] },
@@ -328,8 +326,41 @@
       { name: 'Tiberis', models: [{ name: 'Cube F', connectionType: ConnectionType.RELAY }, { name: 'Mini / Mini S', connectionType: ConnectionType.RELAY }] },
       { name: 'Титан', models: [{ name: 'Z30E-Z95E', connectionType: ConnectionType.RELAY }] },
       { name: 'TIS', models: [{ name: 'Tronic 83', connectionType: ConnectionType.RELAY }, { name: 'Tronic 260', connectionType: ConnectionType.RELAY }, { name: 'Tronic 496P', connectionType: ConnectionType.RELAY }] },
+      { name: 'Titan', models: [{ name: 'Titan Z 30E-95E', connectionType: ConnectionType.RELAY }] },
       { name: 'Unical', models: [{ name: '!DEA', connectionType: ConnectionType.RELAY }, { name: '!VEN', connectionType: ConnectionType.RELAY }] },
+      { name: 'Vaillant', models: [
+          { name: 'atmoTEC Pro VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'atmoTEC Plus VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboTEC Pro VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboTEC Plus VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboFIT VUW', connectionType: ConnectionType.RELAY },
+          { name: 'eloBLOCK VE.../14', connectionType: ConnectionType.EBUS },
+          { name: 'eloBLOCK VE.../13', connectionType: ConnectionType.RELAY },
+          { name: 'atmoCRAFT', connectionType: ConnectionType.RELAY },
+          { name: 'atmoMAX PRO', connectionType: ConnectionType.RELAY },
+          { name: 'atmoVIT', connectionType: ConnectionType.EBUS },
+          { name: 'ecoTEC', connectionType: ConnectionType.RELAY },
+          { name: 'ecoVIT', connectionType: ConnectionType.EBUS },
+          { name: 'ecoCRAFT exclusiv', connectionType: ConnectionType.EBUS },
+          { name: 'ecoCOMPACT', connectionType: ConnectionType.EBUS },
+          { name: 'turboMAX', connectionType: ConnectionType.RELAY },
+        ]
+      },
       { name: 'Vieir', models: [{ name: 'Vieir 5-13', connectionType: ConnectionType.RELAY }] },
+      { name: 'Viessmann', models: [
+          { name: 'Vitogas 100-F', connectionType: ConnectionType.RELAY },
+          { name: 'Vitopend 100-W 2019 (A1HB/A1JB)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitopend 111-W (WHSB)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitopend 222-W (WHSA)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitodens 050-W (BPJC/B0KA/B0HA/BPKA)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 100-W (WB1B/WB1C/B1HC/B1KC)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 111-W (B1LD)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 222-F', connectionType: ConnectionType.RELAY },
+          { name: 'EKCO.T (Kospel)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitotron 100 (VMN3)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitotronic 050/100/200', connectionType: ConnectionType.RELAY },
+        ]
+      },
       { name: 'Vulcan', models: [{ name: 'Контроллер DM320', connectionType: ConnectionType.RELAY }] },
       { name: 'WALLCON', models: [{ name: 'X-Treme', connectionType: ConnectionType.RELAY }] },
       { name: 'WARM', models: [{ name: 'Auros', connectionType: ConnectionType.OPENTHERM }] },
@@ -375,35 +406,37 @@
     // --- CONSTRUCT DISPLAY LIST ---
     
     // 1. Filter out 'Titan' (Latin)
-    const allBrands = RAW_BOILER_BRANDS.filter(b => b.name !== 'Titan');
+    const allAvailableBrands = RAW_BOILER_BRANDS.filter(b => b.name !== 'Titan');
 
-    // 2. Split into Cyrillic and Latin
-    const cyrillicBrands = allBrands.filter(b => /[а-яА-ЯёЁ]/.test(b.name));
-    const latinBrands = allBrands.filter(b => !/[а-яА-ЯёЁ]/.test(b.name));
+    // 2. Identify Priority Brands (Top 10) and sort them alphabetically
+    const PRIORITY_NAMES = ['Baxi', 'Bosch', 'Buderus', 'Ferroli', 'Navien', 'Protherm', 'Vaillant', 'Viessmann', 'Zota', 'Эван'];
+    const prioritySection = allAvailableBrands
+        .filter(b => PRIORITY_NAMES.includes(b.name))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
-    // 3. Sort Cyrillic (Russian alphabet)
-    cyrillicBrands.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-    
-    // 4. Sort Latin (Latin alphabet)
-    latinBrands.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+    // 3. Prepare Cyrillic list (all Russian names)
+    const cyrillicSection = allAvailableBrands
+        .filter(b => /[а-яА-ЯёЁ]/.test(b.name))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
-    // 5. Ensure 'Эван' is last in Cyrillic list (if not already)
-    const evanIndex = cyrillicBrands.findIndex(b => b.name === 'Эван');
-    if (evanIndex > -1) {
-        const evan = cyrillicBrands.splice(evanIndex, 1)[0];
-        cyrillicBrands.push(evan);
+    // 4. Force 'Эван' to the absolute end of Cyrillic section
+    const evanIdx = cyrillicSection.findIndex(b => b.name === 'Эван');
+    if (evanIdx > -1) {
+        const evanObj = cyrillicSection.splice(evanIdx, 1)[0];
+        cyrillicSection.push(evanObj);
     }
 
-    // 6. Extract Priority Brands (Top 10)
-    const PRIORITY_NAMES = ['Baxi', 'Bosch', 'Buderus', 'Ferroli', 'Navien', 'Protherm', 'Vaillant', 'Viessmann', 'Zota', 'Эван'];
-    const priorityBrandsList = PRIORITY_NAMES.map(name => RAW_BOILER_BRANDS.find(b => b.name === name)).filter(Boolean);
+    // 5. Prepare Latin list (all English names)
+    const latinSection = allAvailableBrands
+        .filter(b => !/[а-яА-ЯёЁ]/.test(b.name))
+        .sort((a, b) => a.name.localeCompare(b.name, 'en'));
 
-    // 7. Combine: [Priority] + [Separator] + [Cyrillic] + [Latin]
+    // 6. Final Combined List for Dropdown
     const BOILER_BRANDS = [
-      ...priorityBrandsList,
-      { name: '---------------', models: [] }, // Shortened separator for better mobile display
-      ...cyrillicBrands,
-      ...latinBrands
+      ...prioritySection,
+      { name: '-------', models: [] }, // Shortened separator for mobile
+      ...cyrillicSection,
+      ...latinSection
     ];
 
     const PRODUCTS = [
@@ -476,8 +509,6 @@
       { id: 'ec01039', name: 'Адаптер питания 14В, 2А', price: 950, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-14v-2a/adapter-14v-2a-1-300x300.jpg' },
     ];
 
-    // --- 2. LOGIC ---
-
     const findProduct = (id) => {
       const p = PRODUCTS.find((p) => p.id === id);
       if (!p) throw new Error(`Product ${id} not found`);
@@ -486,39 +517,24 @@
 
     const calculateCart = (state) => {
       const cart = new Map();
-      
       const addItem = (id, qty = 1, isManual = false) => {
         if (qty <= 0) return;
-        
-        // --- NEW: Check if item is hidden by user (for optional items) ---
-        if (!isManual && OPTIONAL_ITEMS.includes(id) && state.hiddenItems?.includes(id)) {
-          return;
-        }
-
+        if (!isManual && OPTIONAL_ITEMS.includes(id) && state.hiddenItems?.includes(id)) return;
         const product = findProduct(id);
         const current = cart.get(id);
-        if (current) {
-          current.quantity += qty;
-        } else {
-          cart.set(id, { ...product, quantity: qty, isManual });
-        }
+        if (current) current.quantity += qty;
+        else cart.set(id, { ...product, quantity: qty, isManual });
       };
 
       const usage = { RELAY: 0, CONTACT: 0, TC: 0, DOP: 0, RADIO: 0, LORA: 0, MIXER: 0, TS: 0 };
       const available = { RELAY: 3, CONTACT: 5, TC: 3, DOP: 1, RADIO: 32, LORA: 0, MIXER: 0, TS: 0 };
 
-      // Base Unit
       addItem('ec01v40', 1);
-
-      // Boilers
       state.boilers.forEach((b, idx) => {
         const type = b.type;
-        if (type === ConnectionType.RELAY) {
+        if (type === ConnectionType.RELAY || type === ConnectionType.CONTACTOR) {
           usage.RELAY += 1;
           addItem('ec01011', 1);
-        } else if (type === ConnectionType.CONTACTOR) {
-          usage.RELAY += 1; 
-          addItem('ec01011', 1); 
         } else if (type) {
           usage.DOP += 1;
           if (type === ConnectionType.OPENTHERM) addItem('ec01042', 1);
@@ -529,198 +545,89 @@
           if (type === ConnectionType.RINNAI) addItem('ec01094', 1);
           if (type === ConnectionType.LEMAX) addItem('ec01092', 1);
         }
-        if (idx > 0) {
-          usage.TC += 1;
-          addItem('ec01003', 1);
-        }
+        if (idx > 0) { usage.TC += 1; addItem('ec01003', 1); }
       });
 
-      // Outdoor Sensor
-      if (state.outdoorSensor) {
-        usage.TC += 1;
-        addItem('ec01003', 1);
-      }
-
-      // Boiler Room
+      if (state.outdoorSensor) { usage.TC += 1; addItem('ec01003', 1); }
       usage.RELAY += state.heatingPumps;
-      if (state.boilerPump) {
-        usage.RELAY += 1;
-        usage.TC += 1;
-        addItem('ec01003', 1);
-      }
-      if (state.recirculationPump) {
-        usage.RELAY += 1;
-      }
+      if (state.boilerPump) { usage.RELAY += 1; usage.TC += 1; addItem('ec01003', 1); }
+      if (state.recirculationPump) usage.RELAY += 1;
       usage.MIXER += state.mixingValves;
       usage.TS += state.mixingValves; 
       addItem('ec01003', state.mixingValves);
 
-      // Zoning
       addItem('ec01099', state.manifoldServos);
       usage.RELAY += state.zones;
       usage.RELAY += state.zonesWithTwoSources;
-      usage.DOP += state.wiredSensors; 
-      addItem('ec01002', state.wiredSensors);
-      usage.LORA += state.wirelessSensors;
-      addItem('ec01041', state.wirelessSensors);
-      usage.DOP += state.wiredThermostats;
-      addItem('ec01091', state.wiredThermostats);
-      usage.LORA += state.wirelessThermostats;
-      addItem('ec01080', state.wirelessThermostats);
-      usage.DOP += state.floorSensors;
-      addItem('ec01004', state.floorSensors);
+      usage.DOP += state.wiredSensors; addItem('ec01002', state.wiredSensors);
+      usage.LORA += state.wirelessSensors; addItem('ec01041', state.wirelessSensors);
+      usage.DOP += state.wiredThermostats; addItem('ec01091', state.wiredThermostats);
+      usage.LORA += state.wirelessThermostats; addItem('ec01080', state.wirelessThermostats);
+      usage.DOP += state.floorSensors; addItem('ec01004', state.floorSensors);
 
-      // Safety
-      usage.CONTACT += state.gasSensors;
-      addItem('ec01008', state.gasSensors);
-      usage.RADIO += state.coSensors;
-      addItem('ec01068', state.coSensors);
-      usage.CONTACT += state.pressureSensors * 2;
-      addItem('ec01010', state.pressureSensors);
-      usage.CONTACT += state.wiredSmokeSensors;
-      addItem('ec01015', state.wiredSmokeSensors);
-      usage.RADIO += state.wirelessSmokeSensors;
-      addItem('ec01017', state.wirelessSmokeSensors);
-      usage.CONTACT += state.wiredLeakSensors;
-      addItem('ec01006', state.wiredLeakSensors);
-      usage.RADIO += state.wirelessLeakSensors;
-      addItem('ec01007', state.wirelessLeakSensors);
-      usage.LORA += state.wirelessLeakSensorsLora;
-      addItem('ec01056', state.wirelessLeakSensorsLora);
+      usage.CONTACT += state.gasSensors; addItem('ec01008', state.gasSensors);
+      usage.RADIO += state.coSensors; addItem('ec01068', state.coSensors);
+      usage.CONTACT += state.pressureSensors * 2; addItem('ec01010', state.pressureSensors);
+      usage.CONTACT += state.wiredSmokeSensors; addItem('ec01015', state.wiredSmokeSensors);
+      usage.RADIO += state.wirelessSmokeSensors; addItem('ec01017', state.wirelessSmokeSensors);
+      usage.CONTACT += state.wiredLeakSensors; addItem('ec01006', state.wiredLeakSensors);
+      usage.RADIO += state.wirelessLeakSensors; addItem('ec01007', state.wirelessLeakSensors);
+      usage.LORA += state.wirelessLeakSensorsLora; addItem('ec01056', state.wirelessLeakSensorsLora);
 
-      // Valves
-      usage.RELAY += state.neptun12;
-      addItem('ec01111', state.neptun12);
-      usage.RELAY += state.neptun34;
-      addItem('ec01112', state.neptun34);
-      usage.RELAY += state.neptun1;
-      addItem('ec01113', state.neptun1);
+      usage.RELAY += state.neptun12; addItem('ec01111', state.neptun12);
+      usage.RELAY += state.neptun34; addItem('ec01112', state.neptun34);
+      usage.RELAY += state.neptun1; addItem('ec01113', state.neptun1);
 
-      // Manual Items
-      state.manualItems.forEach(item => {
-        addItem(item.productId, item.quantity, true);
-      });
+      state.manualItems.forEach(item => addItem(item.productId, item.quantity, true));
 
-      // Constraints Resolution
-      // LORA
       if (usage.LORA > available.LORA) {
-        const loraNeeded = usage.LORA - available.LORA;
-        const adapters = Math.ceil(loraNeeded / 32);
-        available.LORA += adapters * 32;
-        usage.DOP += adapters;
-        addItem('ec01096', adapters);
+        const adapters = Math.ceil((usage.LORA - available.LORA) / 32);
+        available.LORA += adapters * 32; usage.DOP += adapters; addItem('ec01096', adapters);
       }
-      // MIXER & TS
       if (usage.TS > available.TS) {
-        const tsNeeded = usage.TS - available.TS;
-        const blocks = Math.ceil(tsNeeded / 4);
-        available.TS += blocks * 4;
-        available.MIXER += blocks * 4;
-        usage.DOP += blocks;
-        addItem('ec01060', blocks);
+        const blocks = Math.ceil((usage.TS - available.TS) / 4);
+        available.TS += blocks * 4; available.MIXER += blocks * 4; usage.DOP += blocks; addItem('ec01060', blocks);
       }
-      // RELAY
-      while (usage.RELAY > available.RELAY) {
-        addItem('ec01025', 1);
-        available.RELAY += 10;
-        usage.DOP += 1;
-      }
-      // CONTACT
-      while (usage.CONTACT > available.CONTACT) {
-        addItem('ec01055', 1);
-        available.CONTACT += 8;
-        usage.DOP += 1;
-      }
-      // TC
+      while (usage.RELAY > available.RELAY) { addItem('ec01025', 1); available.RELAY += 10; usage.DOP += 1; }
+      while (usage.CONTACT > available.CONTACT) { addItem('ec01055', 1); available.CONTACT += 8; usage.DOP += 1; }
       if (usage.TC > available.TC) {
         let excess = usage.TC - available.TC;
         const item003 = cart.get('ec01003');
-        if (item003 && item003.quantity > 0 && excess > 0) {
-          const protectedQty = state.mixingValves;
-          const swappableQty = Math.max(0, item003.quantity - protectedQty);
-          const swapCount = Math.min(swappableQty, excess);
-          if (swapCount > 0) {
-            item003.quantity -= swapCount;
-            if(item003.quantity === 0) cart.delete('ec01003');
-            addItem('ec01004', swapCount);
-            usage.TC -= swapCount;
-            usage.DOP += swapCount;
-            excess -= swapCount;
-          }
+        if (item003 && item003.quantity > state.mixingValves && excess > 0) {
+          const swap = Math.min(item003.quantity - state.mixingValves, excess);
+          item003.quantity -= swap; if(item003.quantity === 0) cart.delete('ec01003');
+          addItem('ec01004', swap); usage.TC -= swap; usage.DOP += swap; excess -= swap;
         }
         const item001 = cart.get('ec01001');
         if (item001 && item001.quantity > 0 && excess > 0) {
-          const swapCount = Math.min(item001.quantity, excess);
-          item001.quantity -= swapCount;
-          if(item001.quantity === 0) cart.delete('ec01001');
-          addItem('ec01002', swapCount);
-          usage.TC -= swapCount;
-          usage.DOP += swapCount;
-          excess -= swapCount;
+          const swap = Math.min(item001.quantity, excess);
+          item001.quantity -= swap; if(item001.quantity === 0) cart.delete('ec01001');
+          addItem('ec01002', swap); usage.TC -= swap; usage.DOP += swap;
         }
       }
-      // DOP
-      while (usage.DOP > available.DOP) {
-        addItem('ec01033', 1);
-        available.DOP += 8;
-        usage.DOP += 1;
-      }
+      while (usage.DOP > available.DOP) { addItem('ec01033', 1); available.DOP += 8; usage.DOP += 1; }
 
-      // Base Unit Quantity
-      const loadMetric = Math.max(state.mixingValves, state.heatingPumps);
       const boilerCount = state.boilers.filter(b => b.brand).length;
-      const boilerPumpVal = state.boilerPump ? 1 : 0;
-      const zonesVal = state.zones;
-      const logicSum = loadMetric + boilerCount + boilerPumpVal + zonesVal;
-      let finalBaseQty = 1;
-      if (logicSum >= 20 && logicSum <= 38) finalBaseQty = 2;
-      else if (logicSum >= 39) finalBaseQty = 3;
-      
+      const logicSum = Math.max(state.mixingValves, state.heatingPumps) + boilerCount + (state.boilerPump ? 1 : 0) + state.zones;
+      let finalBaseQty = logicSum >= 39 ? 3 : (logicSum >= 20 ? 2 : 1);
       const baseItem = cart.get('ec01v40');
       if (baseItem) baseItem.quantity = finalBaseQty;
 
-      // Power Supply Rule
-      const mixingBlock = cart.get('ec01060');
-      const expansionRelayBlock = cart.get('ec01025');
-      const hasMixing = mixingBlock && mixingBlock.quantity >= 1;
-      const hasManyRelays = expansionRelayBlock && expansionRelayBlock.quantity >= 2;
-      if (hasMixing || hasManyRelays) {
-        addItem('ec01063', 1);
-        addItem('ec01028', 1);
+      if ((cart.get('ec01060')?.quantity >= 1) || (cart.get('ec01025')?.quantity >= 2)) {
+        addItem('ec01063', 1); addItem('ec01028', 1);
       }
-
       return Array.from(cart.values());
     };
 
-    // --- 3. COMPONENTS ---
-
-    const Counter = ({ value, onChange, min = 0, max = 100, label }) => {
-      return (
-        <div className="flex items-center space-x-3">
-          <button 
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors"
-            onClick={() => onChange(Math.max(min, value - 1))}
-          >
-            -
-          </button>
-          <span className="w-12 text-center font-bold text-lg text-ecto-dark select-none">{value}</span>
-          <button 
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors"
-            onClick={() => onChange(Math.min(max, value + 1))}
-          >
-            +
-          </button>
-        </div>
-      );
-    };
+    const Counter = ({ value, onChange, min = 0, max = 100 }) => (
+      <div className="flex items-center space-x-3">
+        <button className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" onClick={() => onChange(Math.max(min, value - 1))}>-</button>
+        <span className="w-12 text-center font-bold text-lg text-ecto-dark select-none">{value}</span>
+        <button className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" onClick={() => onChange(Math.min(max, value + 1))}>+</button>
+      </div>
+    );
 
     const BoilerSection = ({ boilers, outdoorSensor, onUpdate }) => {
-      const handleAddBoiler = () => {
-        if (boilers.length < 5) {
-          onUpdate({ boilers: [...boilers, { brand: '', model: '', id: Date.now().toString() }] });
-        }
-      };
-
       const handleUpdateBoiler = (index, field, value) => {
         const newBoilers = [...boilers];
         newBoilers[index] = { ...newBoilers[index], [field]: value };
@@ -728,13 +635,8 @@
         if (field === 'model') {
            const brandObj = BOILER_BRANDS.find(b => b.name === newBoilers[index].brand);
            const modelObj = brandObj?.models.find(m => m.name === value);
-           if (modelObj) (newBoilers[index]).type = modelObj.connectionType;
+           if (modelObj) newBoilers[index].type = modelObj.connectionType;
         }
-        onUpdate({ boilers: newBoilers });
-      };
-
-      const handleRemoveBoiler = (index) => {
-        const newBoilers = boilers.filter((_, i) => i !== index);
         onUpdate({ boilers: newBoilers });
       };
 
@@ -743,18 +645,12 @@
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Источник тепла</h3>
           <div className="space-y-6">
             <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Котел</label>
-            {boilers.map((boiler, index) => {
-               const brandObj = BOILER_BRANDS.find(b => b.name === boiler.brand);
-               return (
+            {boilers.map((boiler, index) => (
                 <div key={boiler.id} className="bg-gray-50 p-6 rounded-xl border border-gray-100 transition-all hover:shadow-md">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold text-ecto-lightgray mb-2">Марка</label>
-                      <select 
-                        className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold transition-colors text-ecto-dark font-medium"
-                        value={boiler.brand}
-                        onChange={(e) => handleUpdateBoiler(index, 'brand', e.target.value)}
-                      >
+                      <select className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold transition-colors text-ecto-dark font-medium" value={boiler.brand} onChange={(e) => handleUpdateBoiler(index, 'brand', e.target.value)}>
                         <option value="">Выберите марку</option>
                         {BOILER_BRANDS.map((b, idx) => (
                           <option key={`${b.name}-${idx}`} value={b.name} disabled={b.models.length === 0}>{b.name}</option>
@@ -763,29 +659,20 @@
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-ecto-lightgray mb-2">Модель</label>
-                      <select 
-                        className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold disabled:opacity-50 transition-colors text-ecto-dark font-medium"
-                        value={boiler.model}
-                        onChange={(e) => handleUpdateBoiler(index, 'model', e.target.value)}
-                        disabled={!boiler.brand || brandObj?.models.length === 0}
-                      >
+                      <select className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold disabled:opacity-50 transition-colors text-ecto-dark font-medium" value={boiler.model} onChange={(e) => handleUpdateBoiler(index, 'model', e.target.value)} disabled={!boiler.brand}>
                         <option value="">Выберите модель</option>
-                        {brandObj?.models.map(m => (
+                        {(BOILER_BRANDS.find(b => b.name === boiler.brand)?.models || []).map(m => (
                           <option key={m.name} value={m.name}>{m.name}</option>
                         ))}
                       </select>
                     </div>
                   </div>
-                  {index > 0 && (
-                    <button onClick={() => handleRemoveBoiler(index)} className="text-red-500 text-xs mt-4 hover:underline font-medium">Удалить котел</button>
-                  )}
+                  {index > 0 && <button onClick={() => onUpdate({ boilers: boilers.filter((_, i) => i !== index) })} className="text-red-500 text-xs mt-4 hover:underline font-medium">Удалить котел</button>}
                 </div>
-               );
-            })}
+            ))}
             {boilers.length < 5 && (
-              <button onClick={handleAddBoiler} className="flex items-center text-sm font-bold text-ecto-blue hover:text-ecto-gold transition-colors mt-2">
-                <div className="w-6 h-6 border-2 border-current flex items-center justify-center mr-2 rounded-full text-lg leading-none pb-0.5">+</div>
-                ДОБАВИТЬ КОТЕЛ
+              <button onClick={() => onUpdate({ boilers: [...boilers, { brand: '', model: '', id: Date.now().toString() }] })} className="flex items-center text-sm font-bold text-ecto-blue hover:text-ecto-gold transition-colors mt-2">
+                <div className="w-6 h-6 border-2 border-current flex items-center justify-center mr-2 rounded-full text-lg leading-none pb-0.5">+</div>ДОБАВИТЬ КОТЕЛ
               </button>
             )}
           </div>
@@ -802,8 +689,7 @@
       );
     };
 
-    const BoilerRoom = ({ state, onUpdate }) => {
-      return (
+    const BoilerRoom = ({ state, onUpdate }) => (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Оборудование котельной</h3>
           <div className="space-y-8">
@@ -814,18 +700,14 @@
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
               <label className="font-medium text-ecto-dark">Насос загрузки бойлера</label>
               <label className="cursor-pointer">
-                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.boilerPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}>
-                   <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.boilerPump ? 'translate-x-6' : ''}`}></div>
-                </div>
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.boilerPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.boilerPump ? 'translate-x-6' : ''}`}></div></div>
                 <input type="checkbox" className="hidden" checked={state.boilerPump} onChange={(e) => onUpdate({ boilerPump: e.target.checked })} />
               </label>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
               <label className="font-medium text-ecto-dark">Насос рециркуляции</label>
               <label className="cursor-pointer">
-                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.recirculationPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}>
-                   <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.recirculationPump ? 'translate-x-6' : ''}`}></div>
-                </div>
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.recirculationPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.recirculationPump ? 'translate-x-6' : ''}`}></div></div>
                 <input type="checkbox" className="hidden" checked={state.recirculationPump} onChange={(e) => onUpdate({ recirculationPump: e.target.checked })} />
               </label>
             </div>
@@ -835,28 +717,17 @@
             </div>
           </div>
         </div>
-      );
-    };
+    );
 
-    const Zoning = ({ state, onUpdate }) => {
-      return (
+    const Zoning = ({ state, onUpdate }) => (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Зональное управление и датчики</h3>
           <div className="space-y-8">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
-              <label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label>
-              <Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} />
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
-              <label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности<br/><span className="text-sm font-normal text-ecto-lightgray">(в одной зоне может быть объединено несколько сервоприводов от коллектора)</span></label>
-              <Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} />
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
-              <label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label>
-              <Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} />
-            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности</label><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <label className="font-bold block mb-6 text-center text-ecto-dark">Кол-во датчиков температуры воздуха<br/><span className="text-sm font-normal text-ecto-lightgray">(датчик или термостат для каждой зоны)</span></label>
+              <label className="font-bold block mb-6 text-center text-ecto-dark">Кол-во датчиков температуры воздуха</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
@@ -870,28 +741,17 @@
                  </div>
               </div>
             </div>
-            <div className="flex justify-between items-center pt-4">
-               <label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке<br/><span className="text-sm font-normal text-ecto-lightgray">(температура поверхности пола)</span></label>
-               <Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} />
-            </div>
+            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке</label><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
           </div>
         </div>
-      );
-    };
+    );
 
-    const Safety = ({ state, onUpdate }) => {
-      return (
+    const Safety = ({ state, onUpdate }) => (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 mb-8">
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-              <label className="font-medium text-ecto-dark">Датчик утечки газа</label>
-              <Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} />
-            </div>
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-              <label className="font-medium text-ecto-dark">Датчик угарного газа</label>
-              <Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} />
-            </div>
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl"><label className="font-medium text-ecto-dark">Датчик утечки газа</label><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div>
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl"><label className="font-medium text-ecto-dark">Датчик угарного газа</label><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
              <div className="space-y-4">
@@ -900,7 +760,7 @@
                 <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
              </div>
              <div className="flex flex-col justify-start">
-                <label className="font-bold block mb-4 text-sm text-ecto-lightgray uppercase tracking-wider">Контроль давления <span className="text-xs normal-case opacity-70">(манометр)</span></label>
+                <label className="font-bold block mb-4 text-sm text-ecto-lightgray uppercase tracking-wider">Контроль давления</label>
                 <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Количество</span><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
              </div>
           </div>
@@ -924,27 +784,16 @@
             </div>
           </div>
         </div>
-      );
-    };
+    );
 
     const Cart = ({ items, onManualAdd, onRemoveItem }) => {
       const sortedProducts = useMemo(() => [...PRODUCTS].sort((a, b) => a.name.localeCompare(b.name)), []);
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [selectedManualId, setSelectedManualId] = useState(sortedProducts[0].id);
       const [manualQty, setManualQty] = useState(1);
-
-      const totalModules = items.reduce((sum, item) => sum + (item.dinModules ? item.dinModules * item.quantity : 0), 0);
       const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      const handleAdd = () => {
-        onManualAdd({ productId: selectedManualId, quantity: manualQty });
-        setIsModalOpen(false);
-      };
-
-      // Determine if item can be removed
-      const isRemovable = (item) => {
-        return item.isManual || OPTIONAL_ITEMS.includes(item.id);
-      };
+      const totalModules = items.reduce((sum, item) => sum + (item.dinModules ? item.dinModules * item.quantity : 0), 0);
+      const isRemovable = (item) => item.isManual || OPTIONAL_ITEMS.includes(item.id);
 
       return (
         <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 relative h-full flex flex-col">
@@ -956,45 +805,15 @@
                  <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
                    {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <div className="text-gray-300 text-xs">Нет фото</div>}
                  </div>
-                 <div className="flex-grow">
-                    <div className="font-semibold text-ecto-dark leading-tight mb-1">{item.name}</div>
-                    <div className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Арт: {item.id}</div>
-                    <div className="text-sm font-bold text-ecto-gold">
-                      {item.price.toLocaleString('ru-RU')} ₽
-                      {item.quantity > 1 && <span className="ml-1 font-normal text-gray-400 text-xs">x {item.quantity}</span>}
-                    </div>
-                 </div>
-                 <div className="flex flex-col items-end gap-1">
-                    <div className="flex-shrink-0 font-bold bg-gray-100 text-ecto-dark px-2 py-1 rounded text-xs">{item.quantity} шт</div>
-                    {isRemovable(item) && (
-                      <button onClick={() => onRemoveItem(item.id, item.isManual)} className="text-red-300 hover:text-red-500 transition-colors p-1" title="Удалить">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                      </button>
-                    )}
-                 </div>
+                 <div className="flex-grow"><div className="font-semibold text-ecto-dark leading-tight mb-1">{item.name}</div><div className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Арт: {item.id}</div><div className="text-sm font-bold text-ecto-gold">{item.price.toLocaleString('ru-RU')} ₽ {item.quantity > 1 && <span className="ml-1 font-normal text-gray-400 text-xs">x {item.quantity}</span>}</div></div>
+                 <div className="flex flex-col items-end gap-1"><div className="flex-shrink-0 font-bold bg-gray-100 text-ecto-dark px-2 py-1 rounded text-xs">{item.quantity} шт</div>{isRemovable(item) && <button onClick={() => onRemoveItem(item.id, item.isManual)} className="text-red-300 hover:text-red-500 transition-colors p-1" title="Удалить"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>}</div>
               </div>
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex justify-between items-end mb-1">
-              <span className="text-gray-500 font-medium">Итого:</span>
-              <span className="text-2xl font-bold text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            {totalModules > 0 && (
-              <div className="text-xs text-gray-400 mb-6 flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                Места на DIN-рейке: ~{Math.ceil(totalModules)} модулей
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3 no-print">
-              <button onClick={() => window.print()} className="flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl font-semibold text-ecto-dark hover:bg-gray-50 hover:border-gray-300 transition-all">
-                <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Печать
-              </button>
-              <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center px-4 py-3 bg-ecto-gold text-white rounded-xl font-bold hover:bg-[#e6aa00] shadow-lg shadow-yellow-100 transition-all">
-                + Добавить
-              </button>
-            </div>
+            <div className="flex justify-between items-end mb-1"><span className="text-gray-500 font-medium">Итого:</span><span className="text-2xl font-bold text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</span></div>
+            {totalModules > 0 && <div className="text-xs text-gray-400 mb-6 flex items-center"><svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>Места на DIN-рейке: ~{Math.ceil(totalModules)}</div>}
+            <div className="grid grid-cols-2 gap-3 no-print"><button onClick={() => window.print()} className="flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl font-semibold text-ecto-dark hover:bg-gray-50 hover:border-gray-300 transition-all"><svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>Печать</button><button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center px-4 py-3 bg-ecto-gold text-white rounded-xl font-bold hover:bg-[#e6aa00] shadow-lg shadow-yellow-100 transition-all">+ Добавить</button></div>
           </div>
           {isModalOpen && (
             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 no-print">
@@ -1004,12 +823,8 @@
                 <select className="w-full border border-gray-200 rounded-lg p-3 mb-4 bg-gray-50 text-ecto-dark focus:outline-none focus:ring-2 focus:ring-ecto-gold/50" value={selectedManualId} onChange={(e) => setSelectedManualId(e.target.value)}>
                   {sortedProducts.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                 </select>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Количество</label>
                 <input type="number" min="1" className="w-full border border-gray-200 rounded-lg p-3 mb-6 bg-gray-50 text-ecto-dark focus:outline-none focus:ring-2 focus:ring-ecto-gold/50" value={manualQty} onChange={(e) => setManualQty(parseInt(e.target.value))} />
-                <div className="flex justify-end space-x-3">
-                  <button onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-gray-500 hover:text-ecto-dark font-medium transition-colors">Отмена</button>
-                  <button onClick={handleAdd} className="px-5 py-2 bg-ecto-gold text-white font-bold rounded-lg hover:bg-[#e6aa00] transition-colors">Добавить</button>
-                </div>
+                <div className="flex justify-end space-x-3"><button onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-gray-500 hover:text-ecto-dark font-medium transition-colors">Отмена</button><button onClick={() => { onManualAdd({ productId: selectedManualId, quantity: manualQty }); setIsModalOpen(false); }} className="px-5 py-2 bg-ecto-gold text-white font-bold rounded-lg hover:bg-[#e6aa00] transition-colors">Добавить</button></div>
               </div>
             </div>
           )}
@@ -1020,196 +835,58 @@
     const PrintLayout = ({ items }) => {
       const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const totalModules = items.reduce((sum, item) => sum + (item.dinModules ? item.dinModules * item.quantity : 0), 0);
-      const orderNumber = Math.floor(Math.random() * 9000) + 1000;
-
       return (
         <div className="hidden print:block font-sans bg-white text-black p-8 max-w-[210mm] mx-auto">
           <div className="flex justify-between items-start mb-8 border-b-2 border-ecto-gold pb-4">
-            <div>
-               <img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-10 mb-2" />
-               <div className="text-sm font-bold text-ecto-dark">Системы автоматизации отопления</div>
-            </div>
-            <div className="text-right">
-              <div className="font-bold text-xl mb-1 text-ecto-dark">Комплект оборудования № {orderNumber}</div>
-              <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
-            </div>
+            <div><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-10 mb-2" /><div className="text-sm font-bold text-ecto-dark">Системы автоматизации отопления</div></div>
+            <div className="text-right"><div className="font-bold text-xl mb-1 text-ecto-dark">Комплект оборудования № {Math.floor(Math.random()*9000)+1000}</div><div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div></div>
           </div>
           <table className="w-full border-collapse border border-gray-300 mb-8 text-xs">
-            <thead>
-              <tr className="bg-ecto-sand/20">
-                <th className="border border-gray-300 p-2 w-8 text-ecto-dark">№</th>
-                <th className="border border-gray-300 p-2 w-24 text-ecto-dark">Модель<br/>артикул</th>
-                <th className="border border-gray-300 p-2 w-16 text-ecto-dark">Фото</th>
-                <th className="border border-gray-300 p-2 text-ecto-dark">Наименование оборудования</th>
-                <th className="border border-gray-300 p-2 w-12 text-ecto-dark">Кол-во</th>
-                <th className="border border-gray-300 p-2 w-20 text-ecto-dark">Цена/ед.</th>
-                <th className="border border-gray-300 p-2 w-24 text-ecto-dark">Стоимость</th>
-              </tr>
-            </thead>
+            <thead><tr className="bg-ecto-sand/20"><th className="border border-gray-300 p-2 text-ecto-dark">№</th><th className="border border-gray-300 p-2 text-ecto-dark">Артикул</th><th className="border border-gray-300 p-2 text-ecto-dark">Фото</th><th className="border border-gray-300 p-2 text-ecto-dark">Наименование оборудования</th><th className="border border-gray-300 p-2 text-ecto-dark">Кол-во</th><th className="border border-gray-300 p-2 text-ecto-dark">Цена/ед.</th><th className="border border-gray-300 p-2 text-ecto-dark">Стоимость</th></tr></thead>
             <tbody>
-              <tr className="bg-gray-50"><td colSpan={7} className="border border-gray-300 p-1 text-center font-bold text-ecto-dark">Компоненты для управления отоплением</td></tr>
               {items.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="border border-gray-300 p-2 text-center font-bold">{idx + 1}</td>
-                  <td className="border border-gray-300 p-2 text-center font-bold text-gray-600">{item.id}</td>
-                  <td className="border border-gray-300 p-1 text-center">{item.image && <img src={item.image} alt="" className="w-10 h-10 object-contain mx-auto" />}</td>
-                  <td className="border border-gray-300 p-2">
-                     <div className="font-bold text-ecto-dark">
-                       {item.name}
-                       {item.isManual && <span className="text-gray-400 font-normal ml-2 italic">+ добавлено вручную</span>}
-                       
-                       {/* --- NEW: Recommendation Text --- */}
-                       {OPTIONAL_ITEMS.includes(item.id) && !item.isManual && (
-                         <div className="text-gray-400 font-normal italic mt-1">(рекомендуется, но не обязателен)</div>
-                       )}
-                     </div>
-                  </td>
-                  <td className="border border-gray-300 p-2 text-center font-bold">{item.quantity}</td>
-                  <td className="border border-gray-300 p-2 text-right">{item.price.toLocaleString('ru-RU')}</td>
-                  <td className="border border-gray-300 p-2 text-right font-bold text-ecto-dark">{(item.price * item.quantity).toLocaleString('ru-RU')} ₽</td>
-                </tr>
+                <tr key={idx}><td className="border border-gray-300 p-2 text-center font-bold">{idx + 1}</td><td className="border border-gray-300 p-2 text-center font-bold text-gray-600">{item.id}</td><td className="border border-gray-300 p-1 text-center">{item.image && <img src={item.image} alt="" className="w-10 h-10 object-contain mx-auto" />}</td><td className="border border-gray-300 p-2 font-bold text-ecto-dark">{item.name} {item.isManual && <span className="text-gray-400 font-normal ml-2 italic">+ добавлено вручную</span>} {OPTIONAL_ITEMS.includes(item.id) && !item.isManual && <div className="text-gray-400 font-normal italic mt-1">(рекомендуется)</div>}</td><td className="border border-gray-300 p-2 text-center font-bold">{item.quantity}</td><td className="border border-gray-300 p-2 text-right">{item.price.toLocaleString('ru-RU')}</td><td className="border border-gray-300 p-2 text-right font-bold text-ecto-dark">{(item.price * item.quantity).toLocaleString('ru-RU')} ₽</td></tr>
               ))}
               <tr><td colSpan={6} className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">Стоимость комплекта оборудования*:</td><td className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</td></tr>
-              <tr><td colSpan={7} className="border border-gray-300 p-2 text-center font-bold text-gray-600">Ориентировочное количество занимаемых модулей на DIN-рейке*: {Math.ceil(totalModules)}</td></tr>
+              <tr><td colSpan={7} className="border border-gray-300 p-2 text-center font-bold text-gray-600">Ориентировочное количество модулей на DIN-рейке*: {Math.ceil(totalModules)}</td></tr>
             </tbody>
           </table>
-          <div className="border border-ecto-gold p-4 text-center text-xs font-bold mb-8 text-ecto-dark rounded">*Данный комплект составлен автоматическим конфигуратором на сайте ectoControl.ru,<br/>перед покупкой оборудования проконсультируйтесь с менеджером отдела продаж или инженерами монтажа.</div>
-          <div className="flex justify-between items-end mt-12">
-            <div className="flex gap-8">
-               <div className="text-center"><div className="w-24 h-24 mb-2 mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://ectocontrol.ru/products')}`} alt="QR ectocontrol.ru" className="w-full h-full" /></div><span className="text-xs text-gray-600 font-bold">ectocontrol.ru</span></div>
-               <div className="text-center"><div className="w-24 h-24 mb-2 mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://rutube.ru/u/ectocontrol/videos/')}`} alt="QR RuTube" className="w-full h-full" /></div><span className="text-xs text-gray-600 font-bold">RuTube</span></div>
-            </div>
-            <div className="text-right"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 opacity-50" /></div>
-          </div>
+          <div className="border border-ecto-gold p-4 text-center text-xs font-bold mb-8 text-ecto-dark rounded">*Данный комплект составлен автоматическим конфигуратором.</div>
+          <div className="flex justify-between items-end mt-12"><div className="flex gap-8"><div className="text-center"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://ectocontrol.ru/products')}`} alt="QR" className="w-20 h-20 mb-2 mx-auto" /><span className="text-xs text-gray-600 font-bold">ectocontrol.ru</span></div></div><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="logo" className="h-8 opacity-50" /></div>
         </div>
       );
     };
 
-    const getInitialState = () => ({
-      boilers: [{ brand: '', model: '', id: 'init-1' }],
-      outdoorSensor: false,
-      heatingPumps: 0,
-      boilerPump: false,
-      recirculationPump: false,
-      mixingValves: 0,
-      manifoldServos: 0,
-      zones: 0,
-      zonesWithTwoSources: 0,
-      wiredSensors: 0,
-      wirelessSensors: 0,
-      wiredThermostats: 0,
-      wirelessThermostats: 0,
-      floorSensors: 0,
-      gasSensors: 0,
-      coSensors: 0,
-      pressureSensors: 0,
-      wiredSmokeSensors: 0,
-      wirelessSmokeSensors: 0,
-      wiredLeakSensors: 0,
-      wirelessLeakSensors: 0,
-      wirelessLeakSensorsLora: 0,
-      neptun12: 0,
-      neptun34: 0,
-      neptun1: 0,
-      manualItems: [],
-      // --- NEW: Hidden Items State ---
-      hiddenItems: [] 
-    });
-
     const App = () => {
-      const [state, setState] = useState(getInitialState());
+      const [state, setState] = useState({ boilers: [{ brand: '', model: '', id: 'init-1' }], outdoorSensor: false, heatingPumps: 0, boilerPump: false, recirculationPump: false, mixingValves: 0, manifoldServos: 0, zones: 0, zonesWithTwoSources: 0, wiredSensors: 0, wirelessSensors: 0, wiredThermostats: 0, wirelessThermostats: 0, floorSensors: 0, gasSensors: 0, coSensors: 0, pressureSensors: 0, wiredSmokeSensors: 0, wirelessSmokeSensors: 0, wiredLeakSensors: 0, wirelessLeakSensors: 0, wirelessLeakSensorsLora: 0, neptun12: 0, neptun34: 0, neptun1: 0, manualItems: [], hiddenItems: [] });
       const [cartItems, setCartItems] = useState([]);
       const [showResetModal, setShowResetModal] = useState(false);
 
-      useEffect(() => {
-        try {
-          const items = calculateCart(state);
-          setCartItems(items);
-        } catch (e) {
-          console.error("Logic error", e);
-        }
-      }, [state]);
-
-      const handleUpdate = (updates) => {
-        setState(prev => ({ ...prev, ...updates }));
-      };
-
+      useEffect(() => { setCartItems(calculateCart(state)); }, [state]);
       const handleManualAdd = (item) => {
         const existing = state.manualItems.find(i => i.productId === item.productId);
-        let newManualItems;
-        if (existing) {
-          newManualItems = state.manualItems.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i);
-        } else {
-          newManualItems = [...state.manualItems, item];
-        }
-        
-        // --- NEW: If user adds manually, unhide it ---
-        const newHiddenItems = state.hiddenItems.filter(id => id !== item.productId);
-        handleUpdate({ manualItems: newManualItems, hiddenItems: newHiddenItems });
+        const newManualItems = existing ? state.manualItems.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i) : [...state.manualItems, item];
+        setState(prev => ({ ...prev, manualItems: newManualItems, hiddenItems: prev.hiddenItems.filter(id => id !== item.productId) }));
       };
-
-      // --- NEW: Unified Remove Handler ---
       const handleRemoveItem = (productId, isManual) => {
-        if (isManual) {
-          const newManualItems = state.manualItems.filter(i => i.productId !== productId);
-          handleUpdate({ manualItems: newManualItems });
-        } else {
-          // Add to hiddenItems if it's an auto item
-          if (!state.hiddenItems.includes(productId)) {
-            handleUpdate({ hiddenItems: [...state.hiddenItems, productId] });
-          }
-        }
-      };
-
-      const confirmReset = () => {
-        setState(getInitialState());
-        setShowResetModal(false);
+        if (isManual) setState(prev => ({ ...prev, manualItems: prev.manualItems.filter(i => i.productId !== productId) }));
+        else setState(prev => ({ ...prev, hiddenItems: [...prev.hiddenItems, productId] }));
       };
 
       return (
         <React.Fragment>
           <div className="min-h-screen flex flex-col font-sans print:hidden bg-[#F9FAFB] text-ecto-dark selection:bg-ecto-gold/20">
-            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print">
-              <div className="flex items-center space-x-2">
-                 <img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" />
-              </div>
-              <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm hover:bg-ecto-dark hover:text-white transition-all duration-300">СБРОСИТЬ</button>
-            </header>
+            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" /><button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm hover:bg-ecto-dark hover:text-white transition-all">СБРОСИТЬ</button></header>
             <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
-              <div className="mb-6 no-print">
-                <a href="https://ectocontrol.ru/ready-made-solutions" className="inline-flex items-center text-gray-500 hover:text-ecto-gold transition-colors font-medium text-sm">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                  вернуться к странице Продукция
-                </a>
-              </div>
+              <div className="mb-6 no-print"><a href="https://ectocontrol.ru/ready-made-solutions" className="inline-flex items-center text-gray-500 hover:text-ecto-gold font-medium text-sm"><svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>вернуться к странице Продукция</a></div>
               <div className="flex flex-col lg:flex-row gap-8">
-                <div className="flex-grow lg:w-2/3">
-                   <BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={handleUpdate} />
-                   <BoilerRoom state={state} onUpdate={handleUpdate} />
-                   <Zoning state={state} onUpdate={handleUpdate} />
-                   <Safety state={state} onUpdate={handleUpdate} />
-                </div>
-                <div className="lg:w-1/3 relative z-10">
-                  <div className="sticky top-24 print-only-relative">
-                    <Cart items={cartItems} onManualAdd={handleManualAdd} onRemoveItem={handleRemoveItem} />
-                  </div>
-                </div>
+                <div className="flex-grow lg:w-2/3"><BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={(u)=>setState(p=>({...p,...u}))} /><BoilerRoom state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Zoning state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Safety state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /></div>
+                <div className="lg:w-1/3 relative z-10"><div className="sticky top-24"><Cart items={cartItems} onManualAdd={handleManualAdd} onRemoveItem={handleRemoveItem} /></div></div>
               </div>
             </main>
-            <footer className="p-8 text-center text-gray-400 text-sm no-print"></footer>
             {showResetModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 no-print">
-                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center transform transition-all scale-100 border border-gray-100">
-                   <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                     <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                   </div>
-                   <h3 className="text-xl font-bold mb-2 text-ecto-dark">Вы уверены?</h3>
-                   <p className="text-gray-500 mb-8 text-sm">Это действие полностью очистит корзину и сбросит все настройки конфигуратора до исходного состояния.</p>
-                   <div className="flex gap-3 justify-center">
-                     <button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Нет</button>
-                     <button onClick={confirmReset} className="flex-1 px-4 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200">Да, сбросить</button>
-                   </div>
-                 </div>
+                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
               </div>
             )}
           </div>
