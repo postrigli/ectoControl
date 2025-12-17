@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конфигуратор ectoControl</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ecto: {
+              sand: '#ffd269',
+              lightgray: '#91949e',
+              dark: '#51555c',
+              gold: '#fbba00',
+              blue: '#518cc7',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    
+    /* Print Styles */
+    @media print {
+      body { -webkit-print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .page-break { page-break-before: always; }
+      
+      /* Hide scrollbars in print */
+      ::-webkit-scrollbar { display: none; }
+    }
+    .print-only { display: none; }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-[#F9FAFB] text-ecto-dark">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- 1. TYPES & CONSTANTS ---
+
+    const ConnectionType = {
+      RELAY: 'РЕЛЕ',
+      OPENTHERM: 'Opentherm',
+      EBUS: 'E-BUS',
+      ARDERIA: 'Arderia',
+      BSB: 'BSB',
+      NAVIEN: 'Navien',
+      RINNAI: 'RINNAI',
+      LEMAX: 'Lemax',
+      CONTACTOR: 'КОНТАКТОР'
+    };
+
+    // Items that can be removed by the user even if added automatically
+    const OPTIONAL_ITEMS = ['ec01028', 'ec01011', 'ec01063'];
+
+    // Full Boiler Database
+    const BOILER_BRANDS = [
+      { name: 'Baxi', models: [
+          { name: 'Luna 3', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Luna 3 Comfort', connectionType: ConnectionType.OPENTHERM },
+          { name: 'ECO Life', connectionType: ConnectionType.OPENTHERM },
+          { name: 'ECO Nova', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Eco 4S', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Eco Four', connectionType: ConnectionType.OPENTHERM },
+          { name: 'MainFour', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Eco Home', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Fourtech', connectionType: ConnectionType.OPENTHERM },
+          { name: 'ECO Classic', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Slim-in (до 2023)', connectionType: ConnectionType.RELAY },
+          { name: 'Slim-in (с 2023)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Slim HPS', connectionType: ConnectionType.RELAY },
+          { name: 'Ampera', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Ampera Plus', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Ampera Pro', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Nuvola 3', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Nuvola 3 Comfort', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Luna Duo-tec MP+', connectionType: ConnectionType.BSB },
+          { name: 'Luna Duo-tec MP', connectionType: ConnectionType.BSB },
+          { name: 'Luna Platinum+', connectionType: ConnectionType.BSB },
+          { name: 'Power HT+', connectionType: ConnectionType.BSB },
+          { name: 'Power HT-A', connectionType: ConnectionType.BSB },
+          { name: 'Nuvola Duo-Tec', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Nuvola Duo-Tec+', connectionType: ConnectionType.OPENTHERM },
+          { name: 'ECO-5 Compact', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Main 5', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Luna Duo-Tec', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Duo-Tec E', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Duo-Tec Air', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Duo-Tec Compact', connectionType: ConnectionType.OPENTHERM },
+        ] 
+      },
+      { name: 'Bosch', models: [
+          { name: 'GAZ 2500F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'GAS 6000W', connectionType: ConnectionType.OPENTHERM },
+          { name: 'GAZ 2000F', connectionType: ConnectionType.RELAY },
+          { name: 'GAZ 3000W', connectionType: ConnectionType.RELAY },
+          { name: 'GAZ 4000W (ZWA)', connectionType: ConnectionType.RELAY },
+          { name: 'GAZ 7000W (ZSC / ZWC)', connectionType: ConnectionType.RELAY },
+          { name: 'Supraline', connectionType: ConnectionType.RELAY },
+          { name: 'Tronic Heat', connectionType: ConnectionType.RELAY },
+          { name: 'Condens 2500W', connectionType: ConnectionType.RELAY },
+          { name: 'Condens 7000IW', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Buderus', models: [
+          { name: 'Logamax U072', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Logamatic 2101 / 2107 / 2109', connectionType: ConnectionType.RELAY },
+          { name: 'Logamatic 4211 / 4321 / 4322', connectionType: ConnectionType.RELAY },
+          { name: 'Logamatic 5311 / 5313', connectionType: ConnectionType.RELAY },
+          { name: 'Logamatic MC110', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax E213', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax GB072', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax U024', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax U032 / U034', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax U042 / U044', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax U052 / U054', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax U068', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax plus GB062', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax plus GB162 / GB162-V2', connectionType: ConnectionType.RELAY },
+          { name: 'Logamax plus GB172I', connectionType: ConnectionType.RELAY },
+          { name: 'Logano G124 WS', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Ferroli', models: [
+          { name: 'Seven D LN', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Arena C, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Atlas EVO', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Bluehelix Tech S', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Diva F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Divatech D, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Divatop', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Domicompact C', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Domiproject C, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Econcept TECH', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Fortuna C, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'New elite C, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Pegasus D', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitabel HF, C, F', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Atlas, D', connectionType: ConnectionType.RELAY },
+          { name: 'Tor', connectionType: ConnectionType.RELAY },
+          { name: 'Tantaqua N EL', connectionType: ConnectionType.RELAY },
+          { name: 'Domina', connectionType: ConnectionType.RELAY },
+          { name: 'Fortuna PRO / SPECIAL', connectionType: ConnectionType.RELAY },
+          { name: 'GN1 K, N', connectionType: ConnectionType.RELAY },
+          { name: 'LEB', connectionType: ConnectionType.RELAY },
+          { name: 'Pegasus', connectionType: ConnectionType.RELAY },
+          { name: 'Prextherm RSW', connectionType: ConnectionType.RELAY },
+          { name: 'Rendimax N EL', connectionType: ConnectionType.RELAY },
+          { name: 'ZEWS', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Navien', models: [
+          { name: 'NCB700', connectionType: ConnectionType.OPENTHERM },
+          { name: 'NGB150 - NGB210', connectionType: ConnectionType.RELAY },
+          { name: 'Deluxe', connectionType: ConnectionType.NAVIEN },
+          { name: 'Deluxe Plus', connectionType: ConnectionType.NAVIEN },
+          { name: 'Deluxe S', connectionType: ConnectionType.NAVIEN },
+          { name: 'Deluxe Comfort', connectionType: ConnectionType.NAVIEN },
+          { name: 'Deluxe Expert', connectionType: ConnectionType.NAVIEN },
+          { name: 'Ace', connectionType: ConnectionType.NAVIEN },
+          { name: 'ATMO', connectionType: ConnectionType.NAVIEN },
+          { name: 'Deluxe One', connectionType: ConnectionType.RELAY },
+          { name: 'EQB', connectionType: ConnectionType.NAVIEN },
+          { name: 'GA/GST', connectionType: ConnectionType.RELAY },
+          { name: 'GPT/GTD', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Protherm', models: [
+          { name: 'Медведь KLOM17', connectionType: ConnectionType.EBUS },
+          { name: 'Медведь KLOM', connectionType: ConnectionType.RELAY },
+          { name: 'Медведь KLO / KLZ / PLO / TLO', connectionType: ConnectionType.RELAY },
+          { name: 'Рысь (LYNX) HK', connectionType: ConnectionType.RELAY },
+          { name: 'Рысь (LYNX) Condens', connectionType: ConnectionType.EBUS },
+          { name: 'Пантера v17 (до 2015)', connectionType: ConnectionType.RELAY },
+          { name: 'Пантера v18, v19 (с 2015)', connectionType: ConnectionType.EBUS },
+          { name: 'Скат, Ray v14 (с 2019)', connectionType: ConnectionType.EBUS },
+          { name: 'Скат, Ray v13 (до 2019)', connectionType: ConnectionType.RELAY },
+          { name: 'Гепард v18, v19 (с 2015)', connectionType: ConnectionType.EBUS },
+          { name: 'Гепард (до 2015)', connectionType: ConnectionType.RELAY },
+          { name: 'Дельфин v13 (до 2019)', connectionType: ConnectionType.RELAY },
+          { name: 'Дельфин v14 (с 2019)', connectionType: ConnectionType.EBUS },
+          { name: 'Ягуар (Jaguar)', connectionType: ConnectionType.RELAY },
+          { name: 'Леопард (Leopard)', connectionType: ConnectionType.RELAY },
+          { name: 'Тигр (Tiger)', connectionType: ConnectionType.RELAY },
+          { name: 'Бизон NL', connectionType: ConnectionType.RELAY },
+          { name: 'Гризли (Grizzly)', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Vaillant', models: [
+          { name: 'atmoTEC Pro VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'atmoTEC Plus VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboTEC Pro VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboTEC Plus VU/VUW', connectionType: ConnectionType.EBUS },
+          { name: 'turboFIT VUW', connectionType: ConnectionType.RELAY },
+          { name: 'eloBLOCK VE.../14', connectionType: ConnectionType.EBUS },
+          { name: 'eloBLOCK VE.../13', connectionType: ConnectionType.RELAY },
+          { name: 'atmoCRAFT', connectionType: ConnectionType.RELAY },
+          { name: 'atmoMAX PRO', connectionType: ConnectionType.RELAY },
+          { name: 'atmoVIT', connectionType: ConnectionType.EBUS },
+          { name: 'ecoTEC', connectionType: ConnectionType.RELAY },
+          { name: 'ecoVIT', connectionType: ConnectionType.EBUS },
+          { name: 'ecoCRAFT exclusiv', connectionType: ConnectionType.EBUS },
+          { name: 'ecoCOMPACT', connectionType: ConnectionType.EBUS },
+          { name: 'turboMAX', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Viessmann', models: [
+          { name: 'Vitogas 100-F', connectionType: ConnectionType.RELAY },
+          { name: 'Vitopend 100-W 2019 (A1HB/A1JB)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitopend 111-W (WHSB)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitopend 222-W (WHSA)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitodens 050-W (BPJC/B0KA/B0HA/BPKA)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 100-W (WB1B/WB1C/B1HC/B1KC)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 111-W (B1LD)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Vitodens 222-F', connectionType: ConnectionType.RELAY },
+          { name: 'EKCO.T (Kospel)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitotron 100 (VMN3)', connectionType: ConnectionType.RELAY },
+          { name: 'Vitotronic 050/100/200', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Zota', models: [
+          { name: 'Solid / Solid-X', connectionType: ConnectionType.OPENTHERM },
+          { name: 'LUX-X', connectionType: ConnectionType.OPENTHERM },
+          { name: 'MK-X / MK-X PLUS', connectionType: ConnectionType.OPENTHERM },
+          { name: 'MK-S', connectionType: ConnectionType.RELAY },
+          { name: 'MK-S PLUS', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Balance', connectionType: ConnectionType.RELAY },
+          { name: 'Solo', connectionType: ConnectionType.RELAY },
+          { name: 'Lux', connectionType: ConnectionType.RELAY },
+          { name: 'ПУ ЭВТ-SSR, ПУ ЭВТ И1', connectionType: ConnectionType.RELAY },
+          { name: 'ПУ ЭВТ Серия "PROM" (2024)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'ПУ ЭВТ Серия "PROM" (до 2024)', connectionType: ConnectionType.RELAY },
+          { name: 'Pellet', connectionType: ConnectionType.RELAY },
+          { name: 'Reserve SET', connectionType: ConnectionType.RELAY },
+          { name: 'Smart SE', connectionType: ConnectionType.RELAY },
+          { name: 'Stahanov', connectionType: ConnectionType.RELAY },
+          { name: 'ecoMAX350P2-Z', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: 'Эван', models: [
+          { name: 'Expert PLUS', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Warmos / Warmos IV', connectionType: ConnectionType.RELAY },
+          { name: 'Next', connectionType: ConnectionType.RELAY },
+          { name: 'Next PLUS', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Practic', connectionType: ConnectionType.RELAY },
+          { name: 'Practic (New 2022)', connectionType: ConnectionType.OPENTHERM },
+          { name: 'Forward', connectionType: ConnectionType.OPENTHERM },
+          { name: 'C-1 / C-2', connectionType: ConnectionType.RELAY },
+          { name: 'ЭПО', connectionType: ConnectionType.RELAY },
+          { name: 'Novator', connectionType: ConnectionType.RELAY },
+          { name: 'Expert', connectionType: ConnectionType.RELAY },
+        ]
+      },
+      { name: '------------------------------', models: [] },
+      { name: 'ACV', models: [{ name: 'Alfa Sprint', connectionType: ConnectionType.RELAY }, { name: 'Alfa Comfort E', connectionType: ConnectionType.RELAY }, { name: 'BIOmax', connectionType: ConnectionType.RELAY }, { name: 'Compact A', connectionType: ConnectionType.RELAY }, { name: 'Delta Performance', connectionType: ConnectionType.RELAY }, { name: 'Delta Pro', connectionType: ConnectionType.RELAY }, { name: 'E-Tech', connectionType: ConnectionType.RELAY }, { name: 'ETS 9-24', connectionType: ConnectionType.RELAY }, { name: 'Heat Master N', connectionType: ConnectionType.RELAY }, { name: 'HR Solo', connectionType: ConnectionType.OPENTHERM }, { name: 'HRE eco', connectionType: ConnectionType.OPENTHERM }, { name: 'Kompakt HRE eco', connectionType: ConnectionType.OPENTHERM }, { name: 'N1', connectionType: ConnectionType.RELAY }, { name: 'N2', connectionType: ConnectionType.RELAY }, { name: 'N3', connectionType: ConnectionType.RELAY }, { name: 'N-Mini', connectionType: ConnectionType.RELAY }, { name: 'Prestige 42-120 Solo', connectionType: ConnectionType.RELAY }, { name: 'Prestige Excellence 18 - 32 Mklll', connectionType: ConnectionType.RELAY }, { name: 'TKAN 1', connectionType: ConnectionType.RELAY }, { name: 'TKAN 2', connectionType: ConnectionType.RELAY }] },
+      { name: 'AEG', models: [{ name: 'GBA', connectionType: ConnectionType.RELAY }, { name: 'GBT', connectionType: ConnectionType.RELAY }] },
+      { name: 'Alpenhoff', models: [{ name: 'Gamburg', connectionType: ConnectionType.RELAY }] },
+      { name: 'AlphaTherm', models: [{ name: 'Alpha M', connectionType: ConnectionType.RELAY }, { name: 'Beta ATE', connectionType: ConnectionType.RELAY }, { name: 'Delta AT', connectionType: ConnectionType.RELAY }, { name: 'Delta ATB', connectionType: ConnectionType.RELAY }, { name: 'Delta AG', connectionType: ConnectionType.RELAY }] },
+      { name: 'Amber', models: [{ name: 'DHEL 412', connectionType: ConnectionType.RELAY }] },
+      { name: 'Arderia', models: [{ name: 'E4 - E24', connectionType: ConnectionType.ARDERIA }, { name: 'E20m', connectionType: ConnectionType.ARDERIA }, { name: 'D10 - D40', connectionType: ConnectionType.ARDERIA }, { name: 'D10 - D40 Atmo', connectionType: ConnectionType.ARDERIA }, { name: 'B10 - B24', connectionType: ConnectionType.ARDERIA }, { name: 'SB24 - SB40', connectionType: ConnectionType.ARDERIA }, { name: 'S10 - S40', connectionType: ConnectionType.ARDERIA }] },
+      { name: 'Arideya', models: [{ name: 'Arideya Grand', connectionType: ConnectionType.RELAY }] },
+      { name: 'Ariston', models: [{ name: 'CARES X - HS X', connectionType: ConnectionType.EBUS }, { name: 'CLASS X - XC', connectionType: ConnectionType.EBUS }, { name: 'Genus One System', connectionType: ConnectionType.EBUS }, { name: 'Genus EVO', connectionType: ConnectionType.EBUS }, { name: 'Genus Premium EVO', connectionType: ConnectionType.EBUS }, { name: 'ALIXIA S / ULTRA', connectionType: ConnectionType.RELAY }, { name: 'Alteas X / ONE NET', connectionType: ConnectionType.RELAY }, { name: 'BS II FF / CF', connectionType: ConnectionType.RELAY }, { name: 'EGIS PLUS FF / CF', connectionType: ConnectionType.RELAY }, { name: 'EGIS BS FF / CF', connectionType: ConnectionType.RELAY }, { name: 'Unobloc G PV 24-31 RI G 38-45 RI', connectionType: ConnectionType.RELAY }] },
+      { name: 'Attack', models: [{ name: 'EKO', connectionType: ConnectionType.RELAY }, { name: 'PLQ', connectionType: ConnectionType.RELAY }, { name: 'KLQ', connectionType: ConnectionType.RELAY }, { name: 'KLV', connectionType: ConnectionType.RELAY }, { name: 'EZ', connectionType: ConnectionType.RELAY }, { name: 'E', connectionType: ConnectionType.RELAY }] },
+      { name: 'BaltGAZ', models: [{ name: 'Turbo S (с платой BRAHMA 1966)', connectionType: ConnectionType.OPENTHERM }, { name: 'Nevatec 24 Turbo, Turbo E 24, Turbo', connectionType: ConnectionType.RELAY }, { name: 'Turbo E', connectionType: ConnectionType.RELAY }] },
+      { name: 'Baltur', models: [{ name: 'Tesis', connectionType: ConnectionType.OPENTHERM }, { name: 'BTG', connectionType: ConnectionType.RELAY }] },
+      { name: 'Bentone', models: [{ name: 'Горелка ST120KA', connectionType: ConnectionType.RELAY }] },
+      { name: 'Beretta', models: [{ name: 'CIAO C.S.I', connectionType: ConnectionType.OPENTHERM }, { name: 'Avtonom / RAG', connectionType: ConnectionType.RELAY }, { name: 'CITY 24-28 RSI-CSI', connectionType: ConnectionType.RELAY }, { name: 'Fabula', connectionType: ConnectionType.RELAY }, { name: 'Mynute DGT', connectionType: ConnectionType.RELAY }, { name: 'RAI / RAI PV', connectionType: ConnectionType.RELAY }, { name: 'Novella', connectionType: ConnectionType.RELAY }, { name: 'Maxima', connectionType: ConnectionType.RELAY }, { name: 'Verona', connectionType: ConnectionType.RELAY }, { name: 'Excluzive', connectionType: ConnectionType.RELAY }] },
+      { name: 'Biasi', models: [{ name: 'Binova', connectionType: ConnectionType.RELAY }, { name: 'Kappa', connectionType: ConnectionType.RELAY }, { name: 'Super kappa', connectionType: ConnectionType.RELAY }] },
+      { name: 'Biodom', models: [{ name: '27C5', connectionType: ConnectionType.RELAY }, { name: 'C15', connectionType: ConnectionType.RELAY }] },
+      { name: 'BIOTEP', models: [{ name: '8 - 32 кВт', connectionType: ConnectionType.RELAY }] },
+      { name: 'Brotje', models: [{ name: 'WCL WLS 24-28', connectionType: ConnectionType.RELAY }] },
+      { name: 'Chaffoteaux', models: [{ name: 'Alixia FF/CF', connectionType: ConnectionType.RELAY }, { name: 'Niagara C FF/CF', connectionType: ConnectionType.RELAY }, { name: 'Pigma FF/CF', connectionType: ConnectionType.RELAY }, { name: 'Talia FF/CF', connectionType: ConnectionType.RELAY }, { name: 'Talia System', connectionType: ConnectionType.RELAY }, { name: 'Mira CF / MX2 CF', connectionType: ConnectionType.RELAY }] },
+      { name: 'Chaffoteaux&Maury', models: [{ name: 'Mira Comfort CF', connectionType: ConnectionType.RELAY }, { name: 'System Plus FF', connectionType: ConnectionType.RELAY }] },
+      { name: 'Copa', models: [{ name: 'EOMIX', connectionType: ConnectionType.RELAY }, { name: 'EON', connectionType: ConnectionType.RELAY }] },
+      { name: 'CTC', models: [{ name: 'BETA 950/960', connectionType: ConnectionType.RELAY }, { name: '1200 Family', connectionType: ConnectionType.RELAY }, { name: 'Silver / Silver BL', connectionType: ConnectionType.RELAY }] },
+      { name: 'Cuenod', models: [{ name: 'NC4 / NC9', connectionType: ConnectionType.RELAY }] },
+      { name: 'Dakon', models: [{ name: 'GL ECO', connectionType: ConnectionType.RELAY }, { name: 'NM', connectionType: ConnectionType.RELAY }, { name: 'P LUX Z', connectionType: ConnectionType.RELAY }, { name: 'PTE / PTE-M', connectionType: ConnectionType.RELAY }] },
+      { name: 'Danvex', models: [{ name: 'B (30-220)', connectionType: ConnectionType.RELAY }] },
+      { name: 'De Dietrich', models: [{ name: 'AMC (Diematic Evolution)', connectionType: ConnectionType.OPENTHERM }, { name: 'NANEO PMC-S MI', connectionType: ConnectionType.OPENTHERM }, { name: 'Vivadens MCR', connectionType: ConnectionType.OPENTHERM }, { name: 'ZENA MS', connectionType: ConnectionType.OPENTHERM }, { name: 'ZENA PLUS MSL', connectionType: ConnectionType.OPENTHERM }, { name: 'С 330 / С630 (с блоком iniControl)', connectionType: ConnectionType.OPENTHERM }, { name: 'DTG S', connectionType: ConnectionType.RELAY }, { name: 'DTG X', connectionType: ConnectionType.RELAY }, { name: 'PMC', connectionType: ConnectionType.RELAY }, { name: 'Diematic 3', connectionType: ConnectionType.RELAY }, { name: 'Diematic M3', connectionType: ConnectionType.RELAY }] },
+      { name: 'Domusa', models: [{ name: 'Ecogas 60-100', connectionType: ConnectionType.RELAY }] },
+      { name: 'Dozatech', models: [{ name: 'Контроллер RK-2006LP', connectionType: ConnectionType.RELAY }] },
+      { name: 'Dragon', models: [{ name: 'Горелка ТЕРМИНАТОР- 15', connectionType: ConnectionType.RELAY }] },
+      { name: 'ECA', models: [{ name: 'Arceus', connectionType: ConnectionType.RELAY }, { name: 'Proteus Premix', connectionType: ConnectionType.RELAY }, { name: 'Confeo Premix', connectionType: ConnectionType.RELAY }, { name: 'Gelios Plus', connectionType: ConnectionType.RELAY }, { name: 'Gerda', connectionType: ConnectionType.RELAY }, { name: 'Arceus (c 2024)', connectionType: ConnectionType.OPENTHERM }, { name: 'Proteus Premix (c 2024)', connectionType: ConnectionType.OPENTHERM }, { name: 'Confeo Premix (c 2024)', connectionType: ConnectionType.OPENTHERM }, { name: 'Gelios Plus (c 2024)', connectionType: ConnectionType.OPENTHERM }, { name: 'Gerda (c 2024)', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Elco', models: [{ name: 'Thirison L Plus', connectionType: ConnectionType.EBUS }, { name: 'Горелка VG 40-85', connectionType: ConnectionType.RELAY }] },
+      { name: 'Electrolux', models: [{ name: 'FSB', connectionType: ConnectionType.RELAY }, { name: 'GB Basic Space S FI', connectionType: ConnectionType.RELAY }, { name: 'GBC Hi Tech', connectionType: ConnectionType.RELAY }, { name: 'Basic X / Basic Space', connectionType: ConnectionType.RELAY }, { name: 'Quantum', connectionType: ConnectionType.RELAY }] },
+      { name: 'Evberg', models: [{ name: 'LUX / W', connectionType: ConnectionType.RELAY }] },
+      { name: 'Faci', models: [{ name: 'SY 400', connectionType: ConnectionType.RELAY }] },
+      { name: 'Federica Bugatti', models: [{ name: 'Varme', connectionType: ConnectionType.OPENTHERM }, { name: 'Infinito ION Plus', connectionType: ConnectionType.OPENTHERM }, { name: 'Tech', connectionType: ConnectionType.OPENTHERM }, { name: 'Turbo Plus', connectionType: ConnectionType.RELAY }, { name: 'ECO', connectionType: ConnectionType.RELAY }] },
+      { name: 'FER', models: [{ name: 'Seven D LN', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Fil', models: [{ name: 'SPL', connectionType: ConnectionType.RELAY }] },
+      { name: 'Fondital', models: [{ name: 'Antea', connectionType: ConnectionType.OPENTHERM }, { name: 'Formentera', connectionType: ConnectionType.OPENTHERM }, { name: 'Elba Dual', connectionType: ConnectionType.RELAY }, { name: 'Minorca', connectionType: ConnectionType.RELAY }, { name: 'Victoria Compact CTFS 24 AF', connectionType: ConnectionType.RELAY }] },
+      { name: 'Foreman', models: [{ name: 'WH Foremann MF300', connectionType: ConnectionType.RELAY }] },
+      { name: 'Fumis', models: [{ name: 'Fumis Alpha', connectionType: ConnectionType.RELAY }] },
+      { name: 'Fuzzy', models: [{ name: 'Logic 310LG RTC', connectionType: ConnectionType.RELAY }] },
+      { name: 'Galan', models: [{ name: 'Navigator STELS', connectionType: ConnectionType.RELAY }] },
+      { name: 'Gazeco', models: [{ name: 'Gazeco 18-24', connectionType: ConnectionType.RELAY }] },
+      { name: 'Gazlux', models: [{ name: 'Economy', connectionType: ConnectionType.RELAY }, { name: 'Standart', connectionType: ConnectionType.RELAY }, { name: 'Premium', connectionType: ConnectionType.RELAY }] },
+      { name: 'Geffen', models: [{ name: 'MB 4.1', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Haier', models: [{ name: 'Proline TI', connectionType: ConnectionType.RELAY }, { name: 'Techline TI', connectionType: ConnectionType.RELAY }, { name: 'Urban', connectionType: ConnectionType.RELAY }, { name: 'L1PB 12-30', connectionType: ConnectionType.RELAY }, { name: 'Neoslim', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Hansa', models: [{ name: 'Inox', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Heiztechnik', models: [{ name: 'HT-Tronic', connectionType: ConnectionType.RELAY }, { name: 'Q PLUS', connectionType: ConnectionType.RELAY }] },
+      { name: 'Hermann', models: [{ name: 'Eura', connectionType: ConnectionType.RELAY }, { name: 'Habitat 2', connectionType: ConnectionType.RELAY }, { name: 'Thieis', connectionType: ConnectionType.RELAY }] },
+      { name: 'Hi-Therm', models: [{ name: 'Optimus', connectionType: ConnectionType.RELAY }] },
+      { name: 'Hortek', models: [{ name: 'HR-2K', connectionType: ConnectionType.OPENTHERM }, { name: 'Q-Series', connectionType: ConnectionType.RELAY }] },
+      { name: 'Hubert', models: [{ name: 'ABG 10-35 DY', connectionType: ConnectionType.RELAY }, { name: 'Smart AGB', connectionType: ConnectionType.RELAY }] },
+      { name: 'Immergas', models: [{ name: 'EOLO Mythos', connectionType: ConnectionType.OPENTHERM }, { name: 'EOLO Star', connectionType: ConnectionType.RELAY }, { name: 'Nike Mythos', connectionType: ConnectionType.RELAY }, { name: 'Nike Star', connectionType: ConnectionType.RELAY }, { name: 'Alpha 24', connectionType: ConnectionType.RELAY }, { name: 'MINI EOLO', connectionType: ConnectionType.RELAY }, { name: 'Victrix Zeus Superior', connectionType: ConnectionType.RELAY }, { name: 'Victrix Tera', connectionType: ConnectionType.RELAY }, { name: 'Victrix Maior', connectionType: ConnectionType.RELAY }] },
+      { name: 'ItalTherm', models: [{ name: 'City Class', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Jaspi', models: [{ name: 'ECO / LUX', connectionType: ConnectionType.RELAY }] },
+      { name: 'Junkers', models: [{ name: 'Supralin', connectionType: ConnectionType.RELAY }, { name: 'Cerapur ZBR', connectionType: ConnectionType.RELAY }, { name: 'Ceraclass Excellence', connectionType: ConnectionType.RELAY }] },
+      { name: 'Kabola', models: [{ name: 'B-SERIES', connectionType: ConnectionType.RELAY }] },
+      { name: 'Kaukora', models: [{ name: 'FIL SPL', connectionType: ConnectionType.RELAY }] },
+      { name: 'Kentatsu', models: [{ name: 'Nobby Balance', connectionType: ConnectionType.RELAY }, { name: 'Nobby Balance PLUS', connectionType: ConnectionType.RELAY }, { name: 'Nobby Electro', connectionType: ConnectionType.RELAY }, { name: 'Nobby Smart', connectionType: ConnectionType.RELAY }, { name: 'Furst / Kobold', connectionType: ConnectionType.RELAY }] },
+      { name: 'Klover', models: [{ name: 'Style 140-220', connectionType: ConnectionType.RELAY }] },
+      { name: 'Koreastar', models: [{ name: 'ACE', connectionType: ConnectionType.RELAY }, { name: 'Premium', connectionType: ConnectionType.RELAY }] },
+      { name: 'Kospel', models: [{ name: 'ECKO (A, R1, R2, L2M и др.)', connectionType: ConnectionType.RELAY }, { name: 'EKD.M3', connectionType: ConnectionType.RELAY }, { name: 'EPCO', connectionType: ConnectionType.RELAY }] },
+      { name: 'Kotitonttu', models: [{ name: 'Ainova QM', connectionType: ConnectionType.RELAY }] },
+      { name: 'Lamborghini', models: [{ name: 'ERA, ERA F', connectionType: ConnectionType.OPENTHERM }, { name: 'Taura D MCA', connectionType: ConnectionType.OPENTHERM }, { name: 'FL DH', connectionType: ConnectionType.RELAY }, { name: 'AXE 3', connectionType: ConnectionType.RELAY }, { name: 'ECO', connectionType: ConnectionType.RELAY }, { name: 'EXA', connectionType: ConnectionType.RELAY }] },
+      { name: 'Leberg', models: [{ name: 'Flamme', connectionType: ConnectionType.RELAY }, { name: 'RCW-CH', connectionType: ConnectionType.RELAY }] },
+      { name: 'Лемакс', models: [{ name: 'Clever (до мая 2023)', connectionType: ConnectionType.OPENTHERM }, { name: 'Clever (май\'23 - июль\'25)', connectionType: ConnectionType.RELAY }, { name: 'Clever (с июля 2025)', connectionType: ConnectionType.LEMAX }, { name: 'Prime V (до мая 2023)', connectionType: ConnectionType.OPENTHERM }, { name: 'Prime V (май\'23 - июль\'25)', connectionType: ConnectionType.RELAY }, { name: 'Prime V (с июля 2025)', connectionType: ConnectionType.LEMAX }, { name: 'Wise (до мая 2023)', connectionType: ConnectionType.OPENTHERM }, { name: 'Wise (c мая 2023)', connectionType: ConnectionType.RELAY }, { name: 'Премиум (с горелкой Nova820)', connectionType: ConnectionType.RELAY }, { name: 'Eco', connectionType: ConnectionType.RELAY }, { name: 'Proplus', connectionType: ConnectionType.RELAY }, { name: 'Контроллер RK-2006LP', connectionType: ConnectionType.RELAY }, { name: 'WESTER WG', connectionType: ConnectionType.RELAY }] },
+      { name: 'Maktek', models: [{ name: 'LCD', connectionType: ConnectionType.RELAY }] },
+      { name: 'Meteor', models: [{ name: 'C11 - C32', connectionType: ConnectionType.OPENTHERM }, { name: 'Q3', connectionType: ConnectionType.OPENTHERM }, { name: 'B20 - B30', connectionType: ConnectionType.OPENTHERM }, { name: 'M6 - M30', connectionType: ConnectionType.OPENTHERM }, { name: 'T2', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Mizudo', models: [{ name: 'M11TH - M40TH', connectionType: ConnectionType.OPENTHERM }, { name: 'M11TL - M18TL', connectionType: ConnectionType.OPENTHERM }, { name: 'M15T - M26T', connectionType: ConnectionType.RELAY }, { name: 'M15TB - M26TB', connectionType: ConnectionType.RELAY }, { name: 'ECO M24H', connectionType: ConnectionType.RELAY }] },
+      { name: 'Moguchi', models: [{ name: 'GBL11F - GBL24F', connectionType: ConnectionType.OPENTHERM }, { name: 'GBN24F - GBN40F', connectionType: ConnectionType.OPENTHERM }, { name: 'GBN24HF - GBN40HF', connectionType: ConnectionType.OPENTHERM }, { name: 'M-EBH4 - M-EBH16', connectionType: ConnectionType.RELAY }] },
+      { name: 'Monlan', models: [{ name: 'Серия BK', connectionType: ConnectionType.RELAY }] },
+      { name: 'Mora-top', models: [{ name: 'Helios', connectionType: ConnectionType.OPENTHERM }, { name: 'Electra Comfort', connectionType: ConnectionType.RELAY }, { name: 'Sirius', connectionType: ConnectionType.RELAY }] },
+      { name: 'Neva (BaltGAZ)', models: [{ name: 'Turbo / Turbo E', connectionType: ConnectionType.RELAY }, { name: 'Нева люкс', connectionType: ConnectionType.RELAY }] },
+      { name: 'Nova Florida', models: [{ name: 'Aries Dual', connectionType: ConnectionType.RELAY }, { name: 'Delfis / Delfis Mono', connectionType: ConnectionType.RELAY }, { name: 'Drago Dual', connectionType: ConnectionType.RELAY }, { name: 'Libra Dual / Pictor Dual', connectionType: ConnectionType.RELAY }, { name: 'Nibir', connectionType: ConnectionType.RELAY }, { name: 'Vela Compact', connectionType: ConnectionType.RELAY }] },
+      { name: 'Oasis', models: [{ name: 'BM', connectionType: ConnectionType.RELAY }, { name: 'RT', connectionType: ConnectionType.RELAY }] },
+      { name: 'Radiant', models: [{ name: 'RSR', connectionType: ConnectionType.OPENTHERM }, { name: 'RBS', connectionType: ConnectionType.RELAY }] },
+      { name: 'Radijator', models: [{ name: 'ECO COMFORT', connectionType: ConnectionType.RELAY }] },
+      { name: 'Rendamax', models: [{ name: 'R30', connectionType: ConnectionType.RELAY }] },
+      { name: 'Rhoss', models: [{ name: 'THAITY 105', connectionType: ConnectionType.RELAY }] },
+      { name: 'Riello', models: [{ name: '5000', connectionType: ConnectionType.RELAY }] },
+      { name: 'Rinnai', models: [{ name: 'BR-K', connectionType: ConnectionType.RINNAI }, { name: 'BR-U / BR-UE', connectionType: ConnectionType.RINNAI }, { name: 'BR-S / BR-SE', connectionType: ConnectionType.RINNAI }, { name: 'BR-R / BR-RE', connectionType: ConnectionType.RINNAI }, { name: 'BR-RMF', connectionType: ConnectionType.RINNAI }, { name: 'BR-EMF', connectionType: ConnectionType.RINNAI }, { name: 'BR-C(LNG)', connectionType: ConnectionType.RINNAI }] },
+      { name: 'Roca', models: [{ name: 'CPA', connectionType: ConnectionType.RELAY }, { name: 'LIDIA (с панелью CC131)', connectionType: ConnectionType.RELAY }] },
+      { name: 'Roda', models: [{ name: 'Krafter RMOD / BMOD', connectionType: ConnectionType.RELAY }] },
+      { name: 'Rossen', models: [{ name: 'RSA 150-500', connectionType: ConnectionType.RELAY }] },
+      { name: 'RoyalTermo', models: [{ name: 'Aquarius', connectionType: ConnectionType.RELAY }] },
+      { name: 'Руснит', models: [{ name: '205N - 209N', connectionType: ConnectionType.RELAY }, { name: '204M - 209M / 205HM-224HM', connectionType: ConnectionType.RELAY }, { name: '205K-209K', connectionType: ConnectionType.RELAY }, { name: '212-270 / 2100', connectionType: ConnectionType.RELAY }] },
+      { name: 'РЭКО', models: [{ name: '4П - 7П', connectionType: ConnectionType.RELAY }, { name: '3ПМ - 7ПМ', connectionType: ConnectionType.RELAY }] },
+      { name: 'Saunier Duval', models: [{ name: 'Isotwin', connectionType: ConnectionType.RELAY }, { name: 'Thermaclassic', connectionType: ConnectionType.RELAY }, { name: 'Thermafast', connectionType: ConnectionType.RELAY }] },
+      { name: 'Savitr', models: [{ name: 'Control N', connectionType: ConnectionType.RELAY }, { name: 'MAX / PROF', connectionType: ConnectionType.RELAY }, { name: 'Monoblock N', connectionType: ConnectionType.RELAY }, { name: 'Optima / Standart / Premium', connectionType: ConnectionType.RELAY }] },
+      { name: 'Schuster', models: [{ name: 'SWG', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Sime', models: [{ name: '1R / 2R / 2RGT', connectionType: ConnectionType.RELAY }, { name: 'Bitherm', connectionType: ConnectionType.RELAY }, { name: 'Brava Slim BFT', connectionType: ConnectionType.RELAY }, { name: 'Format', connectionType: ConnectionType.RELAY }, { name: 'GO BF', connectionType: ConnectionType.RELAY }, { name: 'Metropolis', connectionType: ConnectionType.RELAY }, { name: 'RMG MK.2', connectionType: ConnectionType.RELAY }, { name: 'Rondo Estelle', connectionType: ConnectionType.RELAY }, { name: 'RS MK II', connectionType: ConnectionType.RELAY }, { name: 'RX / RX TP', connectionType: ConnectionType.RELAY }] },
+      { name: 'Slant Fin', models: [{ name: 'Galaxy GG / GXH', connectionType: ConnectionType.RELAY }] },
+      { name: 'Stanless', models: [{ name: 'ЭВП-48М', connectionType: ConnectionType.RELAY }] },
+      { name: 'Stout', models: [{ name: 'Stout Plus 2022', connectionType: ConnectionType.OPENTHERM }, { name: 'Stout (до 2022)', connectionType: ConnectionType.RELAY }] },
+      { name: 'Tahiti', models: [{ name: 'DUAL LINE', connectionType: ConnectionType.RELAY }] },
+      { name: 'Теплодар', models: [{ name: 'Купер ПРО, Купер ПРО Турбо', connectionType: ConnectionType.RELAY }, { name: 'ПУ Comfort Aqua', connectionType: ConnectionType.RELAY }, { name: 'ПУ Norma Aqua', connectionType: ConnectionType.RELAY }, { name: 'ПУВН10 (новый, с реле термостата)', connectionType: ConnectionType.RELAY }, { name: 'ПУВН10 (старый, без реле термостата)', connectionType: ConnectionType.CONTACTOR }, { name: 'ЭПВ-12(15,18)', connectionType: ConnectionType.CONTACTOR }] },
+      { name: 'Termodinamik', models: [{ name: 'EKY S', connectionType: ConnectionType.RELAY }] },
+      { name: 'Termal', models: [{ name: 'Эл. камины 6-20кВт', connectionType: ConnectionType.RELAY }] },
+      { name: 'Termet', models: [{ name: 'Miniterm / Maxiterm', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Termica', models: [{ name: 'Electrica', connectionType: ConnectionType.RELAY }, { name: 'Grata', connectionType: ConnectionType.RELAY }] },
+      { name: 'TermoBalt', models: [{ name: 'Эл.котлы 3-30 кВт', connectionType: ConnectionType.RELAY }] },
+      { name: 'Teplodom', models: [{ name: 'I-TRM', connectionType: ConnectionType.RELAY }] },
+      { name: 'Thermex', models: [{ name: 'Vega', connectionType: ConnectionType.OPENTHERM }, { name: 'Xantus', connectionType: ConnectionType.OPENTHERM }, { name: 'Andromeda', connectionType: ConnectionType.RELAY }, { name: 'SKIF', connectionType: ConnectionType.RELAY }, { name: 'Boss', connectionType: ConnectionType.RELAY }, { name: 'Hydra', connectionType: ConnectionType.RELAY }, { name: 'Quantum', connectionType: ConnectionType.RELAY }] },
+      { name: 'Thermo Trust', models: [{ name: 'ST / STI', connectionType: ConnectionType.RELAY }, { name: 'Star Monoblock', connectionType: ConnectionType.RELAY }] },
+      { name: 'Thermona', models: [{ name: 'EL 8-45', connectionType: ConnectionType.OPENTHERM }, { name: 'Therm Duo', connectionType: ConnectionType.OPENTHERM }, { name: 'Therm Trio', connectionType: ConnectionType.OPENTHERM }, { name: 'Therm (LXZ.A / TLXZ.A / TLXZE.A)', connectionType: ConnectionType.OPENTHERM }, { name: 'Therm (TCX.A / CX.A)', connectionType: ConnectionType.RELAY }, { name: 'Therm (L / LN / CLN / TCLN)', connectionType: ConnectionType.RELAY }, { name: 'Therm (TCL / TLC )', connectionType: ConnectionType.RELAY }, { name: 'Therm (LX / LXC / CX)', connectionType: ConnectionType.RELAY }, { name: 'Therm (E-B / P-B / EZ-B)', connectionType: ConnectionType.RELAY }] },
+      { name: 'Thision', models: [{ name: 'L ECO', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Tiberis', models: [{ name: 'Cube F', connectionType: ConnectionType.RELAY }, { name: 'Mini / Mini S', connectionType: ConnectionType.RELAY }] },
+      { name: 'Титан', models: [{ name: 'Z30E-Z95E', connectionType: ConnectionType.RELAY }] },
+      { name: 'TIS', models: [{ name: 'Tronic 83', connectionType: ConnectionType.RELAY }, { name: 'Tronic 260', connectionType: ConnectionType.RELAY }, { name: 'Tronic 496P', connectionType: ConnectionType.RELAY }] },
+      { name: 'Titan', models: [{ name: 'Titan Z 30E-95E', connectionType: ConnectionType.RELAY }] },
+      { name: 'Unical', models: [{ name: '!DEA', connectionType: ConnectionType.RELAY }, { name: '!VEN', connectionType: ConnectionType.RELAY }] },
+      { name: 'Vieir', models: [{ name: 'Vieir 5-13', connectionType: ConnectionType.RELAY }] },
+      { name: 'Vulcan', models: [{ name: 'Контроллер DM320', connectionType: ConnectionType.RELAY }] },
+      { name: 'WALLCON', models: [{ name: 'X-Treme', connectionType: ConnectionType.RELAY }] },
+      { name: 'WARM', models: [{ name: 'Auros', connectionType: ConnectionType.OPENTHERM }] },
+      { name: 'Wattek', models: [{ name: 'Eltek', connectionType: ConnectionType.RELAY }] },
+      { name: 'Wert (WertRus)', models: [{ name: 'Eco', connectionType: ConnectionType.RELAY }, { name: 'Nova', connectionType: ConnectionType.RELAY }] },
+      { name: 'Wespe Heizung', models: [{ name: 'Complete U', connectionType: ConnectionType.RELAY }, { name: 'Industrial', connectionType: ConnectionType.RELAY }, { name: 'Elite WH L', connectionType: ConnectionType.RELAY }, { name: 'Foreman', connectionType: ConnectionType.RELAY }, { name: 'Kombi', connectionType: ConnectionType.RELAY }, { name: 'Master', connectionType: ConnectionType.RELAY }, { name: 'MF', connectionType: ConnectionType.RELAY }] },
+      { name: 'Wolf', models: [{ name: 'FGB / FGB-K', connectionType: ConnectionType.EBUS }, { name: 'FGG / FGG-K', connectionType: ConnectionType.OPENTHERM }, { name: 'CGG-3 / CGG-3K', connectionType: ConnectionType.EBUS }, { name: 'CGB / CGB-2', connectionType: ConnectionType.EBUS }, { name: 'CGW-2 / CGS-2', connectionType: ConnectionType.EBUS }, { name: 'MGK-2', connectionType: ConnectionType.EBUS }, { name: 'CGG-1K / CGG-2K', connectionType: ConnectionType.EBUS }, { name: 'TGB', connectionType: ConnectionType.RELAY }, { name: 'MKS / CHK / CHU', connectionType: ConnectionType.RELAY }, { name: 'Контроллер R16 Digi compact', connectionType: ConnectionType.EBUS }, { name: 'Контроллер R31/32', connectionType: ConnectionType.RELAY }] },
+    ];
+
+    const PRODUCTS = [
+      { id: 'ec01v40', name: 'Центральный блок управления ectoControl v.4.0', price: 17900, category: 'base', image: 'https://ectocontrol.ru/image/cache/catalog/photos/ectocontrol-4-0/ectocontrol_4_0_001-600x600.png', dinModules: 12 },
+      { id: 'ec01001', name: 'Датчик температуры воздуха проводной', price: 1190, category: 'sensor', consumesPort: { type: 'TC', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
+      { id: 'ec01002', name: 'Датчик температуры воздуха проводной, RS485', price: 2790, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
+      { id: 'ec01003', name: 'Датчик температуры проводной в гильзе', price: 1390, category: 'sensor', consumesPort: { type: 'TC', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gilza-termo-sensor/gilza_1-400x400.jpg' },
+      { id: 'ec01004', name: 'Датчик температуры проводной в гильзе, RS485', price: 2990, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gilza-485-termo-sensor/gilza-485-4-300x300.jpg' },
+      { id: 'ec01005', name: 'Беспроводной датчик температуры воздуха', price: 3190, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-sensor/bp_termo_1-300x300.jpg' },
+      { id: 'ec01041', name: 'Беспроводной датчик температуры, LoRa', price: 4290, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-sensor/bp_termo_1-300x300.jpg' },
+      { id: 'ec01064', name: 'Беспроводной датчик температуры с гильзой, LoRa', price: 4590, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-gilza-sensor-lora/wireless-termo-gilza-sensor-lora-6-300x300.jpg' },
+      { id: 'ec01042', name: 'Адаптер OpenTherm, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-opentherm/adapter-opentherm-1-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01045', name: 'Адаптер E-Bus, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-ebus/adapter-ebus-1-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01058', name: 'Адаптер Navien, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-navien/adapter-navien-4-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01095', name: 'Адаптер BSB, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-bsb/adapter-bsb-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01093', name: 'Адаптер Arderia, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-arderia/adapter-arderia-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01094', name: 'Адаптер Rinnai, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-rinnai/adapter-rinnai-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01092', name: 'Адаптер Lemax, RS485', price: 3590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-lemax/adapter-lemax-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01097', name: 'Адаптер ШИМ, RS485', price: 5590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-pwm/adapter-pwm-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01098', name: 'Адаптер 0-10В, RS485', price: 5590, category: 'adapter', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-0-10v/adapter-0-10v-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01025', name: 'Блок расширения на 10 реле проводной, RS485', price: 9990, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, providesPort: [{ type: 'RELAY', amount: 10 }], image: 'https://ectocontrol.ru/image/cache/catalog/photos/expansion-block/relay-block-10-1-300x300.jpg', dinModules: 9 },
+      { id: 'ec01033', name: 'Разветвитель датчиков/устройств, RS485', price: 700, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, providesPort: [{ type: 'DOP', amount: 8 }], image: 'https://ectocontrol.ru/image/cache/catalog/photos/splitter-485-sensors/rs485-splitter-sensor-1-300x300.jpg' },
+      { id: 'ec01060', name: 'Блок управления смесительными контурами, RS485', price: 13990, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, providesPort: [{ type: 'MIXER', amount: 4 }, { type: 'TS', amount: 4 }], image: 'https://ectocontrol.ru/image/cache/catalog/photos/mixing-block/mixing-block-1n-300x300.jpg', dinModules: 9 },
+      { id: 'ec01101', name: 'Блок смесительный пропорциональный 0-10В RS485', price: 14900, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/heat-mixer-proportional/heat-mixer-proportional-1-400x400.jpg', dinModules: 9 },
+      { id: 'ec01055', name: 'Разветвитель адресный для контактных датчиков, RS485', price: 1990, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, providesPort: [{ type: 'CONTACT', amount: 8 }], image: 'https://ectocontrol.ru/image/cache/catalog/photos/address-splitter-contact-sensors/address-splitter-contact-sensors-1-300x300.jpg' },
+      { id: 'ec01096', name: 'Адаптер для беспроводных датчиков LoRa, DIN', price: 2490, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, providesPort: [{ type: 'LORA', amount: 32 }], image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-lpwan-adapter-din/wireless-lpwan-adapter-din-6-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01090', name: 'Блок измерительный на 8 каналов, RS485', price: 14900, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/measuring-block-8-channels/measuring-block-8-channels-7-300x300.jpg', dinModules: 9 },
+      { id: 'ec01099', name: 'Сервопривод ectoControl нормально-закрытый, 230В', price: 2690, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/servo-230v/servo-230v-10-300x300.jpg' },
+      { id: 'ec01111', name: 'Шаровой кран 1/2", 12В, Neptun Click SE Bugatti с электроприводом', price: 12000, category: 'other', consumesPort: { type: 'RELAY', amount: 1 }, image: 'https://i.siteapi.org/sEKq2vSMbUqaKEHzcS0wnki0VfY=/fit-in/0x0/center/top/filters:fill(transparent):format(webp)/s.siteapi.org/1b05f7bbad9a56b/img/bq5m7sqexvcwoogcggsg4ogkock8w4' },
+      { id: 'ec01112', name: 'Шаровой кран 3/4", 12В, Neptun Click SE Bugatti с электроприводом', price: 12500, category: 'other', consumesPort: { type: 'RELAY', amount: 1 }, image: 'https://i.siteapi.org/sEKq2vSMbUqaKEHzcS0wnki0VfY=/fit-in/0x0/center/top/filters:fill(transparent):format(webp)/s.siteapi.org/1b05f7bbad9a56b/img/bq5m7sqexvcwoogcggsg4ogkock8w4' },
+      { id: 'ec01113', name: 'Шаровой кран 1", 12В, Neptun Click SE Bugatti с электроприводом', price: 15600, category: 'other', consumesPort: { type: 'RELAY', amount: 1 }, image: 'https://i.siteapi.org/sEKq2vSMbUqaKEHzcS0wnki0VfY=/fit-in/0x0/center/top/filters:fill(transparent):format(webp)/s.siteapi.org/1b05f7bbad9a56b/img/bq5m7sqexvcwoogcggsg4ogkock8w4' },
+      { id: 'ec01079', name: 'Беспроводное реле 10А, LoRa', price: 3990, category: 'other', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-relay-lora/wireless-relay-lora-5-300x300.jpg' },
+      { id: 'ec01009', name: 'Беспроводной электропривод для перекрытия воды/газа', price: 3290, category: 'other', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-valve/wireless_valve_1-300x300.jpg' },
+      { id: 'ec01011', name: 'Провод для подключения котла', price: 290, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/boiler-wire/provod_1-300x300.jpg' },
+      { id: 'ec01091', name: 'Термостат, комнатный регулятор проводной RS485', price: 6990, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/thermostat/thermostat-02-300x300.jpg' },
+      { id: 'ec01080', name: 'Термостат, комнатный регулятор беспроводной, LoRa', price: 6990, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/thermostat/thermostat-02-300x300.jpg' },
+      { id: 'ec01010', name: 'Датчик давления (манометр) проводной', price: 3590, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 2 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/manometer/manometr_002-300x300.jpg' },
+      { id: 'ec01008', name: 'Датчик утечки природного газа проводной', price: 2590, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gas-sensor/wired-gas-sensor-4-300x300.jpg' },
+      { id: 'ec01068', name: 'Беспроводной извещатель угарного газа CO', price: 3590, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-co-sensor/wireless-co-sensor-1-300x300.jpg' },
+      { id: 'ec01015', name: 'Датчик дыма проводной', price: 1290, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-smoke-sensor/%20wired-smoke-sensor-1n-300x300.jpg' },
+      { id: 'ec01017', name: 'Беспроводной датчик дыма', price: 3190, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-smoke-sensor/wireless-smoke-sensor-3-300x300.jpg' },
+      { id: 'ec01006', name: 'Датчик протечки воды проводной', price: 1290, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-leak-sensor/wired_protechka_1n-300x300.jpg' },
+      { id: 'ec01007', name: 'Беспроводной датчик протечки воды', price: 3190, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-leak-sensor/bp_protechka1-300x300.jpg' },
+      { id: 'ec01056', name: 'Беспроводной датчик протечки воды LoRa', price: 4290, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-leak-sensor/bp_protechka1-300x300.jpg' },
+      { id: 'ec01013', name: 'Датчик движения проводной', price: 1290, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-motion-sensor/wired-motion-sensor-3-300x300.jpg' },
+      { id: 'ec01014', name: 'Беспроводной датчик движения', price: 3190, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-motion-sensor/wireless-motion-sensor-1-300x300.jpg' },
+      { id: 'ec01012', name: 'Датчик открытия двери/окна проводной', price: 490, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-door-sensor/wired-door-sensor-1-300x300.jpg' },
+      { id: 'ec01043', name: 'Беспроводной датчик открытия двери/окна', price: 2690, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-door-sensor/wireless-door-sensor-2n-300x300.jpg' },
+      { id: 'ec01016', name: 'Свето-звуковой оповещатель проводной', price: 990, category: 'other', consumesPort: { type: '123', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-siren/wired-siren-2-300x300.jpg' },
+      { id: 'ec01016-1', name: 'Свето-звуковой оповещатель комбинированный', price: 1590, category: 'other', consumesPort: { type: '123', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-separate-siren/wired-separate-siren-1-300x300.jpg' },
+      { id: 'ec01018', name: 'Микрофон проводной', price: 950, category: 'other', consumesPort: { type: 'JACK', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
+      { id: 'ec01019', name: 'Беспроводной брелок режима охраны', price: 2190, category: 'other', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/radio-keychain/brelok1-300x300.jpg' },
+      { id: 'ec01020', name: 'Ключ Touch Memory (считыватель и 3 ключа)', price: 990, category: 'other', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/key-touch-memory/key-touch-memory-3-300x300.jpg' },
+      { id: 'ec01061', name: 'Промежуточное реле Shenler', price: 1880, category: 'other', consumesPort: { type: 'RELAY', amount: 0 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/shenler/shenler_4-300x300.jpg' },
+      { id: 'ec01021', name: 'Блок управления 2-мя розетками, RS485', price: 3290, category: 'expansion', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-socket-220v/blok_rozetok_1-300x300.jpg' },
+      { id: 'ec01022', name: 'Беспроводная розетка 16А', price: 3590, category: 'other', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-socket-220v/wireless_socket_1n-300x300.jpg' },
+      { id: 'ec01023', name: 'Контактор для перем. тока, 4кВт (18А)', price: 990, category: 'other', consumesPort: { type: 'RELAY', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/contactor-4kw/cont_4kv_1-300x300.jpg', dinModules: 2.6 },
+      { id: 'ec01024', name: 'Контактор для перем. Тока, 7кВт (32А)', price: 1790, category: 'other', consumesPort: { type: 'RELAY', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/contactor-4kw/cont_4kv_1-300x300.jpg', dinModules: 2.6 },
+      { id: 'ec01074', name: 'Счетчик электроэнергии 1-фазный CHINT', price: 4290, category: 'other', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/electricity-meter-1-phase/electricity-meter-1-phase-1-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01075', name: 'Счетчик электроэнергии 3-фазный CHINT', price: 7490, category: 'other', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/electricity-meter-3-phase/electricity-meter-3-phase-1-300x300.jpg', dinModules: 4 },
+      { id: 'ec01026', name: 'Датчик наличия сети 220В проводной', price: 1290, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/sensor-220v/adapter220_1-300x300.jpg' },
+      { id: 'ec01027', name: 'Выносная GSM антенна проводная', price: 390, category: 'other', consumesPort: { type: 'SMA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/antenna-3m/antenna-300x300.jpg' },
+      { id: 'ec01028', name: 'Усиленный аккумулятор, 12В, 7 Ач', price: 1690, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/akb-7ah/akb_1-300x300.jpg' },
+      { id: 'ec01029', name: 'Датчик уровня жидкости проводной', price: 1590, category: 'sensor', consumesPort: { type: 'CONTACT', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-level-sensor/wired-level-sensor-3-300x300.jpg' },
+      { id: 'ec01030', name: 'Датчик влажности воздуха проводной, RS485', price: 2990, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
+      { id: 'ec01054', name: 'Датчик влажности воздуха беспроводной', price: 3290, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-sensor/bp_termo_1-300x300.jpg' },
+      { id: 'ec01062', name: 'Коннектор 4P4C (RJ11), 10шт', price: 50, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/connector-4p4c/connector-4p4c-3-300x300.jpg' },
+      { id: 'ec01031', name: 'Батарейка (запасная) для датчиков', price: 260, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/battery-cr123a/cr123a-1n-300x300.jpg' },
+      { id: 'ec01063', name: 'Сетевой адаптер MeanWell 14В 1.5А DIN', price: 2500, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-14v-din/adapter-14v-din-5-300x300.jpg', dinModules: 2.2 },
+      { id: 'ec01039', name: 'Адаптер питания 14В, 2А', price: 950, category: 'other', image: 'https://ectocontrol.ru/image/cache/catalog/photos/adapter-14v-2a/adapter-14v-2a-1-300x300.jpg' },
+    ];
+
+    // --- 2. LOGIC ---
+
+    const findProduct = (id) => {
+      const p = PRODUCTS.find((p) => p.id === id);
+      if (!p) throw new Error(`Product ${id} not found`);
+      return p;
+    };
+
+    const calculateCart = (state) => {
+      const cart = new Map();
+      
+      const addItem = (id, qty = 1, isManual = false) => {
+        if (qty <= 0) return;
+        
+        // --- NEW: Check if item is hidden by user (for optional items) ---
+        if (!isManual && OPTIONAL_ITEMS.includes(id) && state.hiddenItems?.includes(id)) {
+          return;
+        }
+
+        const product = findProduct(id);
+        const current = cart.get(id);
+        if (current) {
+          current.quantity += qty;
+        } else {
+          cart.set(id, { ...product, quantity: qty, isManual });
+        }
+      };
+
+      const usage = { RELAY: 0, CONTACT: 0, TC: 0, DOP: 0, RADIO: 0, LORA: 0, MIXER: 0, TS: 0 };
+      const available = { RELAY: 3, CONTACT: 5, TC: 3, DOP: 1, RADIO: 32, LORA: 0, MIXER: 0, TS: 0 };
+
+      // Base Unit
+      addItem('ec01v40', 1);
+
+      // Boilers
+      state.boilers.forEach((b, idx) => {
+        const type = b.type;
+        if (type === ConnectionType.RELAY) {
+          usage.RELAY += 1;
+          addItem('ec01011', 1);
+        } else if (type === ConnectionType.CONTACTOR) {
+          usage.RELAY += 1; 
+          addItem('ec01011', 1); 
+        } else if (type) {
+          usage.DOP += 1;
+          if (type === ConnectionType.OPENTHERM) addItem('ec01042', 1);
+          if (type === ConnectionType.EBUS) addItem('ec01045', 1);
+          if (type === ConnectionType.NAVIEN) addItem('ec01058', 1);
+          if (type === ConnectionType.ARDERIA) addItem('ec01093', 1);
+          if (type === ConnectionType.BSB) addItem('ec01095', 1);
+          if (type === ConnectionType.RINNAI) addItem('ec01094', 1);
+          if (type === ConnectionType.LEMAX) addItem('ec01092', 1);
+        }
+        if (idx > 0) {
+          usage.TC += 1;
+          addItem('ec01003', 1);
+        }
+      });
+
+      // Outdoor Sensor
+      if (state.outdoorSensor) {
+        usage.TC += 1;
+        addItem('ec01003', 1);
+      }
+
+      // Boiler Room
+      usage.RELAY += state.heatingPumps;
+      if (state.boilerPump) {
+        usage.RELAY += 1;
+        usage.TC += 1;
+        addItem('ec01003', 1);
+      }
+      if (state.recirculationPump) {
+        usage.RELAY += 1;
+      }
+      usage.MIXER += state.mixingValves;
+      usage.TS += state.mixingValves; 
+      addItem('ec01003', state.mixingValves);
+
+      // Zoning
+      addItem('ec01099', state.manifoldServos);
+      usage.RELAY += state.zones;
+      usage.RELAY += state.zonesWithTwoSources;
+      usage.DOP += state.wiredSensors; 
+      addItem('ec01002', state.wiredSensors);
+      usage.LORA += state.wirelessSensors;
+      addItem('ec01041', state.wirelessSensors);
+      usage.DOP += state.wiredThermostats;
+      addItem('ec01091', state.wiredThermostats);
+      usage.LORA += state.wirelessThermostats;
+      addItem('ec01080', state.wirelessThermostats);
+      usage.DOP += state.floorSensors;
+      addItem('ec01004', state.floorSensors);
+
+      // Safety
+      usage.CONTACT += state.gasSensors;
+      addItem('ec01008', state.gasSensors);
+      usage.RADIO += state.coSensors;
+      addItem('ec01068', state.coSensors);
+      usage.CONTACT += state.pressureSensors * 2;
+      addItem('ec01010', state.pressureSensors);
+      usage.CONTACT += state.wiredSmokeSensors;
+      addItem('ec01015', state.wiredSmokeSensors);
+      usage.RADIO += state.wirelessSmokeSensors;
+      addItem('ec01017', state.wirelessSmokeSensors);
+      usage.CONTACT += state.wiredLeakSensors;
+      addItem('ec01006', state.wiredLeakSensors);
+      usage.RADIO += state.wirelessLeakSensors;
+      addItem('ec01007', state.wirelessLeakSensors);
+      usage.LORA += state.wirelessLeakSensorsLora;
+      addItem('ec01056', state.wirelessLeakSensorsLora);
+
+      // Valves
+      usage.RELAY += state.neptun12;
+      addItem('ec01111', state.neptun12);
+      usage.RELAY += state.neptun34;
+      addItem('ec01112', state.neptun34);
+      usage.RELAY += state.neptun1;
+      addItem('ec01113', state.neptun1);
+
+      // Manual Items
+      state.manualItems.forEach(item => {
+        addItem(item.productId, item.quantity, true);
+      });
+
+      // Constraints Resolution
+      // LORA
+      if (usage.LORA > available.LORA) {
+        const loraNeeded = usage.LORA - available.LORA;
+        const adapters = Math.ceil(loraNeeded / 32);
+        available.LORA += adapters * 32;
+        usage.DOP += adapters;
+        addItem('ec01096', adapters);
+      }
+      // MIXER & TS
+      if (usage.TS > available.TS) {
+        const tsNeeded = usage.TS - available.TS;
+        const blocks = Math.ceil(tsNeeded / 4);
+        available.TS += blocks * 4;
+        available.MIXER += blocks * 4;
+        usage.DOP += blocks;
+        addItem('ec01060', blocks);
+      }
+      // RELAY
+      while (usage.RELAY > available.RELAY) {
+        addItem('ec01025', 1);
+        available.RELAY += 10;
+        usage.DOP += 1;
+      }
+      // CONTACT
+      while (usage.CONTACT > available.CONTACT) {
+        addItem('ec01055', 1);
+        available.CONTACT += 8;
+        usage.DOP += 1;
+      }
+      // TC
+      if (usage.TC > available.TC) {
+        let excess = usage.TC - available.TC;
+        const item003 = cart.get('ec01003');
+        if (item003 && item003.quantity > 0 && excess > 0) {
+          const protectedQty = state.mixingValves;
+          const swappableQty = Math.max(0, item003.quantity - protectedQty);
+          const swapCount = Math.min(swappableQty, excess);
+          if (swapCount > 0) {
+            item003.quantity -= swapCount;
+            if(item003.quantity === 0) cart.delete('ec01003');
+            addItem('ec01004', swapCount);
+            usage.TC -= swapCount;
+            usage.DOP += swapCount;
+            excess -= swapCount;
+          }
+        }
+        const item001 = cart.get('ec01001');
+        if (item001 && item001.quantity > 0 && excess > 0) {
+          const swapCount = Math.min(item001.quantity, excess);
+          item001.quantity -= swapCount;
+          if(item001.quantity === 0) cart.delete('ec01001');
+          addItem('ec01002', swapCount);
+          usage.TC -= swapCount;
+          usage.DOP += swapCount;
+          excess -= swapCount;
+        }
+      }
+      // DOP
+      while (usage.DOP > available.DOP) {
+        addItem('ec01033', 1);
+        available.DOP += 8;
+        usage.DOP += 1;
+      }
+
+      // Base Unit Quantity
+      const loadMetric = Math.max(state.mixingValves, state.heatingPumps);
+      const boilerCount = state.boilers.filter(b => b.brand).length;
+      const boilerPumpVal = state.boilerPump ? 1 : 0;
+      const zonesVal = state.zones;
+      const logicSum = loadMetric + boilerCount + boilerPumpVal + zonesVal;
+      let finalBaseQty = 1;
+      if (logicSum >= 20 && logicSum <= 38) finalBaseQty = 2;
+      else if (logicSum >= 39) finalBaseQty = 3;
+      
+      const baseItem = cart.get('ec01v40');
+      if (baseItem) baseItem.quantity = finalBaseQty;
+
+      // Power Supply Rule
+      const mixingBlock = cart.get('ec01060');
+      const expansionRelayBlock = cart.get('ec01025');
+      const hasMixing = mixingBlock && mixingBlock.quantity >= 1;
+      const hasManyRelays = expansionRelayBlock && expansionRelayBlock.quantity >= 2;
+      if (hasMixing || hasManyRelays) {
+        addItem('ec01063', 1);
+        addItem('ec01028', 1);
+      }
+
+      return Array.from(cart.values());
+    };
+
+    // --- 3. COMPONENTS ---
+
+    const Counter = ({ value, onChange, min = 0, max = 100, label }) => {
+      return (
+        <div className="flex items-center space-x-3">
+          <button 
+            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors"
+            onClick={() => onChange(Math.max(min, value - 1))}
+          >
+            -
+          </button>
+          <span className="w-12 text-center font-bold text-lg text-ecto-dark select-none">{value}</span>
+          <button 
+            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors"
+            onClick={() => onChange(Math.min(max, value + 1))}
+          >
+            +
+          </button>
+        </div>
+      );
+    };
+
+    const BoilerSection = ({ boilers, outdoorSensor, onUpdate }) => {
+      const handleAddBoiler = () => {
+        if (boilers.length < 5) {
+          onUpdate({ boilers: [...boilers, { brand: '', model: '', id: Date.now().toString() }] });
+        }
+      };
+
+      const handleUpdateBoiler = (index, field, value) => {
+        const newBoilers = [...boilers];
+        newBoilers[index] = { ...newBoilers[index], [field]: value };
+        if (field === 'brand') newBoilers[index].model = '';
+        if (field === 'model') {
+           const brandObj = BOILER_BRANDS.find(b => b.name === newBoilers[index].brand);
+           const modelObj = brandObj?.models.find(m => m.name === value);
+           if (modelObj) (newBoilers[index]).type = modelObj.connectionType;
+        }
+        onUpdate({ boilers: newBoilers });
+      };
+
+      const handleRemoveBoiler = (index) => {
+        const newBoilers = boilers.filter((_, i) => i !== index);
+        onUpdate({ boilers: newBoilers });
+      };
+
+      return (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Источник тепла</h3>
+          <div className="space-y-6">
+            <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Котел</label>
+            {boilers.map((boiler, index) => {
+               const brandObj = BOILER_BRANDS.find(b => b.name === boiler.brand);
+               return (
+                <div key={boiler.id} className="bg-gray-50 p-6 rounded-xl border border-gray-100 transition-all hover:shadow-md">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-bold text-ecto-lightgray mb-2">Марка</label>
+                      <select 
+                        className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold transition-colors text-ecto-dark font-medium"
+                        value={boiler.brand}
+                        onChange={(e) => handleUpdateBoiler(index, 'brand', e.target.value)}
+                      >
+                        <option value="">Выберите марку</option>
+                        {BOILER_BRANDS.map((b, idx) => (
+                          <option key={`${b.name}-${idx}`} value={b.name} disabled={b.models.length === 0}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-ecto-lightgray mb-2">Модель</label>
+                      <select 
+                        className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold disabled:opacity-50 transition-colors text-ecto-dark font-medium"
+                        value={boiler.model}
+                        onChange={(e) => handleUpdateBoiler(index, 'model', e.target.value)}
+                        disabled={!boiler.brand || brandObj?.models.length === 0}
+                      >
+                        <option value="">Выберите модель</option>
+                        {brandObj?.models.map(m => (
+                          <option key={m.name} value={m.name}>{m.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {index > 0 && (
+                    <button onClick={() => handleRemoveBoiler(index)} className="text-red-500 text-xs mt-4 hover:underline font-medium">Удалить котел</button>
+                  )}
+                </div>
+               );
+            })}
+            {boilers.length < 5 && (
+              <button onClick={handleAddBoiler} className="flex items-center text-sm font-bold text-ecto-blue hover:text-ecto-gold transition-colors mt-2">
+                <div className="w-6 h-6 border-2 border-current flex items-center justify-center mr-2 rounded-full text-lg leading-none pb-0.5">+</div>
+                ДОБАВИТЬ КОТЕЛ
+              </button>
+            )}
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <label className="flex items-center cursor-pointer group">
+              <div className={`w-6 h-6 border-2 border-gray-300 rounded flex items-center justify-center mr-3 transition-colors group-hover:border-ecto-gold ${outdoorSensor ? 'bg-ecto-gold border-ecto-gold text-white' : 'bg-white'}`}>
+                {outdoorSensor && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+              </div>
+              <input type="checkbox" className="hidden" checked={outdoorSensor} onChange={(e) => onUpdate({ outdoorSensor: e.target.checked })} />
+              <span className="font-medium text-ecto-dark group-hover:text-ecto-gold transition-colors">Добавить датчик для улицы (ПЗА)</span>
+            </label>
+          </div>
+        </div>
+      );
+    };
+
+    const BoilerRoom = ({ state, onUpdate }) => {
+      return (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Оборудование котельной</h3>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+              <label className="font-medium text-ecto-dark max-w-[70%]">Количество насосов отопления<br/><span className="text-sm font-normal text-ecto-lightgray">(кроме бойлера)</span></label>
+              <Counter value={state.heatingPumps} onChange={(v) => onUpdate({ heatingPumps: v })} max={20} />
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+              <label className="font-medium text-ecto-dark">Насос загрузки бойлера</label>
+              <label className="cursor-pointer">
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.boilerPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}>
+                   <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.boilerPump ? 'translate-x-6' : ''}`}></div>
+                </div>
+                <input type="checkbox" className="hidden" checked={state.boilerPump} onChange={(e) => onUpdate({ boilerPump: e.target.checked })} />
+              </label>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+              <label className="font-medium text-ecto-dark">Насос рециркуляции</label>
+              <label className="cursor-pointer">
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.recirculationPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}>
+                   <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.recirculationPump ? 'translate-x-6' : ''}`}></div>
+                </div>
+                <input type="checkbox" className="hidden" checked={state.recirculationPump} onChange={(e) => onUpdate({ recirculationPump: e.target.checked })} />
+              </label>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+              <label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов на<br/>3-ходовых клапанах</label>
+              <Counter value={state.mixingValves} onChange={(v) => onUpdate({ mixingValves: v })} max={20} />
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Zoning = ({ state, onUpdate }) => {
+      return (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Зональное управление и датчики</h3>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label>
+              <Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} />
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности<br/><span className="text-sm font-normal text-ecto-lightgray">(в одной зоне может быть объединено несколько сервоприводов от коллектора)</span></label>
+              <Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} />
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label>
+              <Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} />
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6">
+              <label className="font-bold block mb-6 text-center text-ecto-dark">Кол-во датчиков температуры воздуха<br/><span className="text-sm font-normal text-ecto-lightgray">(датчик или термостат для каждой зоны)</span></label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
+                 <div className="space-y-4">
+                   <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной LoRa</span><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div>
+                 </div>
+                 <div className="space-y-4">
+                   <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div>
+                 </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center pt-4">
+               <label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке<br/><span className="text-sm font-normal text-ecto-lightgray">(температура поверхности пола)</span></label>
+               <Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} />
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Safety = ({ state, onUpdate }) => {
+      return (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 mb-8">
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+              <label className="font-medium text-ecto-dark">Датчик утечки газа</label>
+              <Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} />
+            </div>
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+              <label className="font-medium text-ecto-dark">Датчик угарного газа</label>
+              <Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+             <div className="space-y-4">
+                <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Пожарные датчики</label>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
+             </div>
+             <div className="flex flex-col justify-start">
+                <label className="font-bold block mb-4 text-sm text-ecto-lightgray uppercase tracking-wider">Контроль давления <span className="text-xs normal-case opacity-70">(манометр)</span></label>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Количество</span><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
+             </div>
+          </div>
+          <div className="mt-10 pt-8 border-t border-gray-100">
+            <label className="font-bold block mb-6 text-ecto-dark">Контроль протечки воды</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 <div className="space-y-4">
+                   <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider">Датчики</h4>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">LoRa</span><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div>
+                 </div>
+                 <div className="col-span-2 space-y-4">
+                   <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider text-center">Сервоприводы Neptun</h4>
+                   <div className="flex flex-col sm:flex-row justify-around items-center gap-6 sm:gap-0 bg-gray-50 rounded-xl p-4">
+                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">1/2"</span><Counter value={state.neptun12} onChange={(v) => onUpdate({ neptun12: v })} max={32} /></div>
+                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">3/4"</span><Counter value={state.neptun34} onChange={(v) => onUpdate({ neptun34: v })} max={32} /></div>
+                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">1"</span><Counter value={state.neptun1} onChange={(v) => onUpdate({ neptun1: v })} max={32} /></div>
+                   </div>
+                 </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Cart = ({ items, onManualAdd, onRemoveItem }) => {
+      const sortedProducts = useMemo(() => [...PRODUCTS].sort((a, b) => a.name.localeCompare(b.name)), []);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [selectedManualId, setSelectedManualId] = useState(sortedProducts[0].id);
+      const [manualQty, setManualQty] = useState(1);
+
+      const totalModules = items.reduce((sum, item) => sum + (item.dinModules ? item.dinModules * item.quantity : 0), 0);
+      const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      const handleAdd = () => {
+        onManualAdd({ productId: selectedManualId, quantity: manualQty });
+        setIsModalOpen(false);
+      };
+
+      // Determine if item can be removed
+      const isRemovable = (item) => {
+        return item.isManual || OPTIONAL_ITEMS.includes(item.id);
+      };
+
+      return (
+        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 relative h-full flex flex-col">
+          <h2 className="text-xl font-bold mb-4 text-ecto-dark">Ваш комплект</h2>
+          <div className="flex-grow overflow-y-auto max-h-[60vh] pr-2 space-y-4 custom-scrollbar">
+            {items.length === 0 && <p className="text-gray-400 text-sm text-center py-8">Корзина пуста</p>}
+            {items.map((item, idx) => (
+              <div key={item.id + idx} className="flex justify-between items-start text-sm border-b border-gray-50 pb-3 gap-3 last:border-0 group">
+                 <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
+                   {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <div className="text-gray-300 text-xs">Нет фото</div>}
+                 </div>
+                 <div className="flex-grow">
+                    <div className="font-semibold text-ecto-dark leading-tight mb-1">{item.name}</div>
+                    <div className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Арт: {item.id}</div>
+                    <div className="text-sm font-bold text-ecto-gold">
+                      {item.price.toLocaleString('ru-RU')} ₽
+                      {item.quantity > 1 && <span className="ml-1 font-normal text-gray-400 text-xs">x {item.quantity}</span>}
+                    </div>
+                 </div>
+                 <div className="flex flex-col items-end gap-1">
+                    <div className="flex-shrink-0 font-bold bg-gray-100 text-ecto-dark px-2 py-1 rounded text-xs">{item.quantity} шт</div>
+                    {isRemovable(item) && (
+                      <button onClick={() => onRemoveItem(item.id, item.isManual)} className="text-red-300 hover:text-red-500 transition-colors p-1" title="Удалить">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </button>
+                    )}
+                 </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex justify-between items-end mb-1">
+              <span className="text-gray-500 font-medium">Итого:</span>
+              <span className="text-2xl font-bold text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</span>
+            </div>
+            {totalModules > 0 && (
+              <div className="text-xs text-gray-400 mb-6 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                Места на DIN-рейке: ~{Math.ceil(totalModules)} модулей
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3 no-print">
+              <button onClick={() => window.print()} className="flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl font-semibold text-ecto-dark hover:bg-gray-50 hover:border-gray-300 transition-all">
+                <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Печать
+              </button>
+              <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center px-4 py-3 bg-ecto-gold text-white rounded-xl font-bold hover:bg-[#e6aa00] shadow-lg shadow-yellow-100 transition-all">
+                + Добавить
+              </button>
+            </div>
+          </div>
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 no-print">
+              <div className="bg-white p-6 rounded-2xl max-w-md w-full m-4 shadow-2xl">
+                <h3 className="text-lg font-bold mb-4 text-ecto-dark">Добавить оборудование</h3>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Выберите товар</label>
+                <select className="w-full border border-gray-200 rounded-lg p-3 mb-4 bg-gray-50 text-ecto-dark focus:outline-none focus:ring-2 focus:ring-ecto-gold/50" value={selectedManualId} onChange={(e) => setSelectedManualId(e.target.value)}>
+                  {sortedProducts.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
+                </select>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Количество</label>
+                <input type="number" min="1" className="w-full border border-gray-200 rounded-lg p-3 mb-6 bg-gray-50 text-ecto-dark focus:outline-none focus:ring-2 focus:ring-ecto-gold/50" value={manualQty} onChange={(e) => setManualQty(parseInt(e.target.value))} />
+                <div className="flex justify-end space-x-3">
+                  <button onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-gray-500 hover:text-ecto-dark font-medium transition-colors">Отмена</button>
+                  <button onClick={handleAdd} className="px-5 py-2 bg-ecto-gold text-white font-bold rounded-lg hover:bg-[#e6aa00] transition-colors">Добавить</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const PrintLayout = ({ items }) => {
+      const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const totalModules = items.reduce((sum, item) => sum + (item.dinModules ? item.dinModules * item.quantity : 0), 0);
+      const orderNumber = Math.floor(Math.random() * 9000) + 1000;
+
+      return (
+        <div className="hidden print:block font-sans bg-white text-black p-8 max-w-[210mm] mx-auto">
+          <div className="flex justify-between items-start mb-8 border-b-2 border-ecto-gold pb-4">
+            <div>
+               <img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-10 mb-2" />
+               <div className="text-sm font-bold text-ecto-dark">Системы автоматизации отопления</div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-xl mb-1 text-ecto-dark">Комплект оборудования № {orderNumber}</div>
+              <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+          <table className="w-full border-collapse border border-gray-300 mb-8 text-xs">
+            <thead>
+              <tr className="bg-ecto-sand/20">
+                <th className="border border-gray-300 p-2 w-8 text-ecto-dark">№</th>
+                <th className="border border-gray-300 p-2 w-24 text-ecto-dark">Модель<br/>артикул</th>
+                <th className="border border-gray-300 p-2 w-16 text-ecto-dark">Фото</th>
+                <th className="border border-gray-300 p-2 text-ecto-dark">Наименование оборудования</th>
+                <th className="border border-gray-300 p-2 w-12 text-ecto-dark">Кол-во</th>
+                <th className="border border-gray-300 p-2 w-20 text-ecto-dark">Цена/ед.</th>
+                <th className="border border-gray-300 p-2 w-24 text-ecto-dark">Стоимость</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="bg-gray-50"><td colSpan={7} className="border border-gray-300 p-1 text-center font-bold text-ecto-dark">Компоненты для управления отоплением</td></tr>
+              {items.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="border border-gray-300 p-2 text-center font-bold">{idx + 1}</td>
+                  <td className="border border-gray-300 p-2 text-center font-bold text-gray-600">{item.id}</td>
+                  <td className="border border-gray-300 p-1 text-center">{item.image && <img src={item.image} alt="" className="w-10 h-10 object-contain mx-auto" />}</td>
+                  <td className="border border-gray-300 p-2">
+                     <div className="font-bold text-ecto-dark">
+                       {item.name}
+                       {item.isManual && <span className="text-gray-400 font-normal ml-2 italic">+ добавлено вручную</span>}
+                       
+                       {/* --- NEW: Recommendation Text --- */}
+                       {OPTIONAL_ITEMS.includes(item.id) && !item.isManual && (
+                         <div className="text-gray-400 font-normal italic mt-1">(рекомендуется, но не обязателен)</div>
+                       )}
+                     </div>
+                  </td>
+                  <td className="border border-gray-300 p-2 text-center font-bold">{item.quantity}</td>
+                  <td className="border border-gray-300 p-2 text-right">{item.price.toLocaleString('ru-RU')}</td>
+                  <td className="border border-gray-300 p-2 text-right font-bold text-ecto-dark">{(item.price * item.quantity).toLocaleString('ru-RU')} ₽</td>
+                </tr>
+              ))}
+              <tr><td colSpan={6} className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">Стоимость комплекта оборудования*:</td><td className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</td></tr>
+              <tr><td colSpan={7} className="border border-gray-300 p-2 text-center font-bold text-gray-600">Ориентировочное количество занимаемых модулей на DIN-рейке*: {Math.ceil(totalModules)}</td></tr>
+            </tbody>
+          </table>
+          <div className="border border-ecto-gold p-4 text-center text-xs font-bold mb-8 text-ecto-dark rounded">*Данный комплект составлен автоматическим конфигуратором на сайте ectoControl.ru,<br/>перед покупкой оборудования проконсультируйтесь с менеджером отдела продаж или инженерами монтажа.</div>
+          <div className="flex justify-between items-end mt-12">
+            <div className="flex gap-8">
+               <div className="text-center"><div className="w-24 h-24 mb-2 mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://ectocontrol.ru/products')}`} alt="QR ectocontrol.ru" className="w-full h-full" /></div><span className="text-xs text-gray-600 font-bold">ectocontrol.ru</span></div>
+               <div className="text-center"><div className="w-24 h-24 mb-2 mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://rutube.ru/u/ectocontrol/videos/')}`} alt="QR RuTube" className="w-full h-full" /></div><span className="text-xs text-gray-600 font-bold">RuTube</span></div>
+            </div>
+            <div className="text-right"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 opacity-50" /></div>
+          </div>
+        </div>
+      );
+    };
+
+    const getInitialState = () => ({
+      boilers: [{ brand: '', model: '', id: 'init-1' }],
+      outdoorSensor: false,
+      heatingPumps: 0,
+      boilerPump: false,
+      recirculationPump: false,
+      mixingValves: 0,
+      manifoldServos: 0,
+      zones: 0,
+      zonesWithTwoSources: 0,
+      wiredSensors: 0,
+      wirelessSensors: 0,
+      wiredThermostats: 0,
+      wirelessThermostats: 0,
+      floorSensors: 0,
+      gasSensors: 0,
+      coSensors: 0,
+      pressureSensors: 0,
+      wiredSmokeSensors: 0,
+      wirelessSmokeSensors: 0,
+      wiredLeakSensors: 0,
+      wirelessLeakSensors: 0,
+      wirelessLeakSensorsLora: 0,
+      neptun12: 0,
+      neptun34: 0,
+      neptun1: 0,
+      manualItems: [],
+      // --- NEW: Hidden Items State ---
+      hiddenItems: [] 
+    });
+
+    const App = () => {
+      const [state, setState] = useState(getInitialState());
+      const [cartItems, setCartItems] = useState([]);
+      const [showResetModal, setShowResetModal] = useState(false);
+
+      useEffect(() => {
+        try {
+          const items = calculateCart(state);
+          setCartItems(items);
+        } catch (e) {
+          console.error("Logic error", e);
+        }
+      }, [state]);
+
+      const handleUpdate = (updates) => {
+        setState(prev => ({ ...prev, ...updates }));
+      };
+
+      const handleManualAdd = (item) => {
+        const existing = state.manualItems.find(i => i.productId === item.productId);
+        let newManualItems;
+        if (existing) {
+          newManualItems = state.manualItems.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i);
+        } else {
+          newManualItems = [...state.manualItems, item];
+        }
+        
+        // --- NEW: If user adds manually, unhide it ---
+        const newHiddenItems = state.hiddenItems.filter(id => id !== item.productId);
+        handleUpdate({ manualItems: newManualItems, hiddenItems: newHiddenItems });
+      };
+
+      // --- NEW: Unified Remove Handler ---
+      const handleRemoveItem = (productId, isManual) => {
+        if (isManual) {
+          const newManualItems = state.manualItems.filter(i => i.productId !== productId);
+          handleUpdate({ manualItems: newManualItems });
+        } else {
+          // Add to hiddenItems if it's an auto item
+          if (!state.hiddenItems.includes(productId)) {
+            handleUpdate({ hiddenItems: [...state.hiddenItems, productId] });
+          }
+        }
+      };
+
+      const confirmReset = () => {
+        setState(getInitialState());
+        setShowResetModal(false);
+      };
+
+      return (
+        <React.Fragment>
+          <div className="min-h-screen flex flex-col font-sans print:hidden bg-[#F9FAFB] text-ecto-dark selection:bg-ecto-gold/20">
+            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print">
+              <div className="flex items-center space-x-2">
+                 <img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" />
+              </div>
+              <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm hover:bg-ecto-dark hover:text-white transition-all duration-300">СБРОСИТЬ</button>
+            </header>
+            <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
+              <div className="mb-6 no-print">
+                <a href="https://ectocontrol.ru/ready-made-solutions" className="inline-flex items-center text-gray-500 hover:text-ecto-gold transition-colors font-medium text-sm">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                  вернуться к странице Продукция
+                </a>
+              </div>
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-grow lg:w-2/3">
+                   <BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={handleUpdate} />
+                   <BoilerRoom state={state} onUpdate={handleUpdate} />
+                   <Zoning state={state} onUpdate={handleUpdate} />
+                   <Safety state={state} onUpdate={handleUpdate} />
+                </div>
+                <div className="lg:w-1/3 relative z-10">
+                  <div className="sticky top-24 print-only-relative">
+                    <Cart items={cartItems} onManualAdd={handleManualAdd} onRemoveItem={handleRemoveItem} />
+                  </div>
+                </div>
+              </div>
+            </main>
+            <footer className="p-8 text-center text-gray-400 text-sm no-print"></footer>
+            {showResetModal && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 no-print">
+                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center transform transition-all scale-100 border border-gray-100">
+                   <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                   </div>
+                   <h3 className="text-xl font-bold mb-2 text-ecto-dark">Вы уверены?</h3>
+                   <p className="text-gray-500 mb-8 text-sm">Это действие полностью очистит корзину и сбросит все настройки конфигуратора до исходного состояния.</p>
+                   <div className="flex gap-3 justify-center">
+                     <button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Нет</button>
+                     <button onClick={confirmReset} className="flex-1 px-4 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200">Да, сбросить</button>
+                   </div>
+                 </div>
+              </div>
+            )}
+          </div>
+          <PrintLayout items={cartItems} />
+        </React.Fragment>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
