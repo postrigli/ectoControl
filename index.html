@@ -57,8 +57,8 @@
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
@@ -328,7 +328,6 @@
       { name: 'Tiberis', models: [{ name: 'Cube F', connectionType: ConnectionType.RELAY }, { name: 'Mini / Mini S', connectionType: ConnectionType.RELAY }] },
       { name: 'Титан', models: [{ name: 'Z30E-Z95E', connectionType: ConnectionType.RELAY }] },
       { name: 'TIS', models: [{ name: 'Tronic 83', connectionType: ConnectionType.RELAY }, { name: 'Tronic 260', connectionType: ConnectionType.RELAY }, { name: 'Tronic 496P', connectionType: ConnectionType.RELAY }] },
-      { name: 'Titan', models: [{ name: 'Titan Z 30E-95E', connectionType: ConnectionType.RELAY }] },
       { name: 'Unical', models: [{ name: '!DEA', connectionType: ConnectionType.RELAY }, { name: '!VEN', connectionType: ConnectionType.RELAY }] },
       { name: 'Vieir', models: [{ name: 'Vieir 5-13', connectionType: ConnectionType.RELAY }] },
       { name: 'Vulcan', models: [{ name: 'Контроллер DM320', connectionType: ConnectionType.RELAY }] },
@@ -402,7 +401,7 @@
     // 7. Combine: [Priority] + [Separator] + [Cyrillic] + [Latin]
     const BOILER_BRANDS = [
       ...priorityBrandsList,
-      { name: '------------------------------', models: [] },
+      { name: '---------------', models: [] }, // Shortened separator for better mobile display
       ...cyrillicBrands,
       ...latinBrands
     ];
