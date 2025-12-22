@@ -544,7 +544,9 @@
       // Initial unit added first to Map to maintain top position
       addItem('ec01v40', 1);
 
-      state.boilers.forEach((b, idx) => {
+      const boilerCount = state.boilers.filter(b => b.brand).length;
+
+      state.boilers.forEach((b) => {
         const type = b.type;
         if (type === ConnectionType.RELAY || type === ConnectionType.CONTACTOR) {
           usage.RELAY += 1;
@@ -559,8 +561,13 @@
           if (type === ConnectionType.RINNAI) addItem('ec01094', 1);
           if (type === ConnectionType.LEMAX) addItem('ec01092', 1);
         }
-        if (idx > 0) { usage.TC += 1; addItem('ec01003', 1); }
       });
+
+      // Logic fix: Any number of additional boilers adds exactly 1 sensor ec01003
+      if (boilerCount > 1) {
+          usage.TC += 1;
+          addItem('ec01003', 1);
+      }
 
       if (state.outdoorSensor) { usage.TC += 1; addItem('ec01003', 1); }
       usage.RELAY += state.heatingPumps;
@@ -576,13 +583,13 @@
       
       // Air temperature sensors
       usage.DOP += state.wiredSensors; addItem('ec01002', state.wiredSensors);
-      usage.RADIO += state.wirelessRadioSensors; addItem('ec01005', state.wirelessRadioSensors); // Added Wireless RADIO sensor
+      usage.RADIO += state.wirelessRadioSensors; addItem('ec01005', state.wirelessRadioSensors); 
       usage.LORA += state.wirelessSensors; addItem('ec01041', state.wirelessSensors);
       
       // Thermostats
       usage.DOP += state.wiredThermostats; addItem('ec01091', state.wiredThermostats);
       usage.LORA += state.wirelessThermostats; addItem('ec01080', state.wirelessThermostats);
-      usage.CONTACT += state.ownThermostats; // Logic: dry contact consumes CONTACT ports
+      usage.CONTACT += state.ownThermostats; // Dry contact thermostats consumes CONTACT ports
 
       usage.DOP += state.floorSensors; addItem('ec01004', state.floorSensors);
 
@@ -632,11 +639,10 @@
       while (usage.DOP > available.DOP) { addItem('ec01033', 1); available.DOP += 8; usage.DOP += 1; }
 
       // Central unit scaling logic
-      const boilerCount = state.boilers.filter(b => b.brand).length;
       const logicSum = Math.max(state.mixingValves, state.heatingPumps) + boilerCount + (state.boilerPump ? 1 : 0) + state.zones;
       let finalBaseQty = logicSum >= 39 ? 3 : (logicSum >= 20 ? 2 : 1);
       
-      // Radio logic: ec01v40 adds +32 Radio slots
+      // Radio Logic: ec01v40 adds +32 Radio slots
       if (usage.RADIO > finalBaseQty * 32) {
         finalBaseQty = Math.ceil(usage.RADIO / 32);
       }
