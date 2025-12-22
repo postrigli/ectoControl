@@ -52,6 +52,20 @@
       ::-webkit-scrollbar { display: none; }
     }
     .print-only { display: none; }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #e5e7eb;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #d1d5db;
+    }
   </style>
 <script type="importmap">
 {
@@ -367,7 +381,7 @@
       { name: 'Wattek', models: [{ name: 'Eltek', connectionType: ConnectionType.RELAY }] },
       { name: 'Wert (WertRus)', models: [{ name: 'Eco', connectionType: ConnectionType.RELAY }, { name: 'Nova', connectionType: ConnectionType.RELAY }] },
       { name: 'Wespe Heizung', models: [{ name: 'Complete U', connectionType: ConnectionType.RELAY }, { name: 'Industrial', connectionType: ConnectionType.RELAY }, { name: 'Elite WH L', connectionType: ConnectionType.RELAY }, { name: 'Foreman', connectionType: ConnectionType.RELAY }, { name: 'Kombi', connectionType: ConnectionType.RELAY }, { name: 'Master', connectionType: ConnectionType.RELAY }, { name: 'MF', connectionType: ConnectionType.RELAY }] },
-      { name: 'Wolf', models: [{ name: 'FGB / FGB-K', connectionType: ConnectionType.EBUS }, { name: 'FGG / FGG-K', connectionType: ConnectionType.OPENTHERM }, { name: 'CGG-3 / CGG-3K', connectionType: ConnectionType.EBUS }, { name: 'CGB / CGB-2', connectionType: ConnectionType.EBUS }, { name: 'CGW-2 / CGS-2', connectionType: ConnectionType.EBUS }, { name: 'MGK-2', connectionType: ConnectionType.EBUS }, { name: 'CGG-1K / CGG-2K', connectionType: ConnectionType.EBUS }, { name: 'TGB', connectionType: ConnectionType.RELAY }, { name: 'MKS / CHK / CHU', connectionType: ConnectionType.RELAY }, { name: 'Контроллер R16 Digi compact', connectionType: ConnectionType.EBUS }, { name: 'Контроллер R31/32', connectionType: ConnectionType.RELAY }] },
+      { name: 'Wolf', models: [{ name: 'FGB / FGB-K', connectionType: ConnectionType.EBUS }, { name: 'FGG / FGB-K', connectionType: ConnectionType.OPENTHERM }, { name: 'CGG-3 / CGG-3K', connectionType: ConnectionType.EBUS }, { name: 'CGB / CGB-2', connectionType: ConnectionType.EBUS }, { name: 'CGW-2 / CGS-2', connectionType: ConnectionType.EBUS }, { name: 'MGK-2', connectionType: ConnectionType.EBUS }, { name: 'CGG-1K / CGG-2K', connectionType: ConnectionType.EBUS }, { name: 'TGB', connectionType: ConnectionType.RELAY }, { name: 'MKS / CHK / CHU', connectionType: ConnectionType.RELAY }, { name: 'Контроллер R16 Digi compact', connectionType: ConnectionType.EBUS }, { name: 'Контроллер R31/32', connectionType: ConnectionType.RELAY }] },
       { name: 'Zota', models: [
           { name: 'Solid / Solid-X', connectionType: ConnectionType.OPENTHERM },
           { name: 'LUX-X', connectionType: ConnectionType.OPENTHERM },
@@ -403,32 +417,38 @@
       },
     ];
 
+    // Helper: Sort Latin A-Z, then Cyrillic А-Я
+    const sortAlphaLatinFirst = (a, b) => {
+      const nameA = a.name || a;
+      const nameB = b.name || b;
+      const isALatin = /^[a-zA-Z]/.test(nameA);
+      const isBLatin = /^[a-zA-Z]/.test(nameB);
+      if (isALatin && !isBLatin) return -1;
+      if (!isALatin && isBLatin) return 1;
+      return nameA.localeCompare(nameB, 'ru');
+    };
+
     // --- CONSTRUCT DISPLAY LIST ---
-    const allAvailableBrands = RAW_BOILER_BRANDS.filter(b => b.name !== 'Titan');
     const PRIORITY_NAMES = ['Baxi', 'Bosch', 'Buderus', 'Ferroli', 'Navien', 'Protherm', 'Vaillant', 'Viessmann', 'Zota', 'Эван'];
-    const prioritySection = allAvailableBrands
+    
+    // Process brands: Sort internal model lists and then split into blocks
+    const processedBrands = RAW_BOILER_BRANDS.filter(b => b.name !== 'Titan').map(brand => ({
+      ...brand,
+      models: [...brand.models].sort(sortAlphaLatinFirst)
+    }));
+
+    const priorityBlock = processedBrands
         .filter(b => PRIORITY_NAMES.includes(b.name))
-        .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        .sort(sortAlphaLatinFirst);
 
-    const cyrillicSection = allAvailableBrands
-        .filter(b => /[а-яА-ЯёЁ]/.test(b.name))
-        .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-
-    const evanIdx = cyrillicSection.findIndex(b => b.name === 'Эван');
-    if (evanIdx > -1) {
-        const evanObj = cyrillicSection.splice(evanIdx, 1)[0];
-        cyrillicSection.push(evanObj);
-    }
-
-    const latinSection = allAvailableBrands
-        .filter(b => !/[а-яА-ЯёЁ]/.test(b.name))
-        .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+    const otherBlock = processedBrands
+        .filter(b => !PRIORITY_NAMES.includes(b.name))
+        .sort(sortAlphaLatinFirst);
 
     const BOILER_BRANDS = [
-      ...prioritySection,
+      ...priorityBlock,
       { name: '-------', models: [] }, 
-      ...cyrillicSection,
-      ...latinSection
+      ...otherBlock
     ];
 
     const PRODUCTS = [
@@ -436,7 +456,7 @@
       { id: 'ec01001', name: 'Датчик температуры воздуха проводной', price: 1190, category: 'sensor', consumesPort: { type: 'TC', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
       { id: 'ec01002', name: 'Датчик температуры воздуха проводной, RS485', price: 2790, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wired-termo-sensor/termo1-300x300.jpg' },
       { id: 'ec01003', name: 'Датчик температуры проводной в гильзе', price: 1390, category: 'sensor', consumesPort: { type: 'TC', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gilza-termo-sensor/gilza_1-400x400.jpg' },
-      { id: 'ec01004', name: 'Датчик температуры проводной в гильзе, RS485', price: 2990, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gilza-485-termo-sensor/gilza-485-4-300x300.jpg' },
+      { id: 'ec01004', name: 'Датчик температуры проводной в гильзе, RS485', price: 2990, category: 'sensor', consumesPort: { type: 'DOP', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/gilza-485-termo-sensor/gilza_485_4-300x300.jpg' },
       { id: 'ec01005', name: 'Беспроводной датчик температуры воздуха', price: 3190, category: 'sensor', consumesPort: { type: 'RADIO', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-sensor/bp_termo_1-300x300.jpg' },
       { id: 'ec01041', name: 'Беспроводной датчик температуры, LoRa', price: 4290, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-sensor/bp_termo_1-300x300.jpg' },
       { id: 'ec01064', name: 'Беспроводной датчик температуры с гильзой, LoRa', price: 4590, category: 'sensor', consumesPort: { type: 'LORA', amount: 1 }, image: 'https://ectocontrol.ru/image/cache/catalog/photos/wireless-termo-gilza-sensor-lora/wireless-termo-gilza-sensor-lora-6-300x300.jpg' },
@@ -521,7 +541,9 @@
       const usage = { RELAY: 0, CONTACT: 0, TC: 0, DOP: 0, RADIO: 0, LORA: 0, MIXER: 0, TS: 0 };
       const available = { RELAY: 3, CONTACT: 5, TC: 3, DOP: 1, RADIO: 32, LORA: 0, MIXER: 0, TS: 0 };
 
+      // Initial unit added first to Map to maintain top position
       addItem('ec01v40', 1);
+
       state.boilers.forEach((b, idx) => {
         const type = b.type;
         if (type === ConnectionType.RELAY || type === ConnectionType.CONTACTOR) {
@@ -551,10 +573,17 @@
       addItem('ec01099', state.manifoldServos);
       usage.RELAY += state.zones;
       usage.RELAY += state.zonesWithTwoSources;
+      
+      // Air temperature sensors
       usage.DOP += state.wiredSensors; addItem('ec01002', state.wiredSensors);
+      usage.RADIO += state.wirelessRadioSensors; addItem('ec01005', state.wirelessRadioSensors); // Added Wireless RADIO sensor
       usage.LORA += state.wirelessSensors; addItem('ec01041', state.wirelessSensors);
+      
+      // Thermostats
       usage.DOP += state.wiredThermostats; addItem('ec01091', state.wiredThermostats);
       usage.LORA += state.wirelessThermostats; addItem('ec01080', state.wirelessThermostats);
+      usage.CONTACT += state.ownThermostats; // Logic: dry contact consumes CONTACT ports
+
       usage.DOP += state.floorSensors; addItem('ec01004', state.floorSensors);
 
       usage.CONTACT += state.gasSensors; addItem('ec01008', state.gasSensors);
@@ -572,6 +601,7 @@
 
       state.manualItems.forEach(item => addItem(item.productId, item.quantity, true));
 
+      // Resolve adapters and blocks
       if (usage.LORA > available.LORA) {
         const adapters = Math.ceil((usage.LORA - available.LORA) / 32);
         available.LORA += adapters * 32; usage.DOP += adapters; addItem('ec01096', adapters);
@@ -582,6 +612,8 @@
       }
       while (usage.RELAY > available.RELAY) { addItem('ec01025', 1); available.RELAY += 10; usage.DOP += 1; }
       while (usage.CONTACT > available.CONTACT) { addItem('ec01055', 1); available.CONTACT += 8; usage.DOP += 1; }
+      
+      // Swap TC for DOP if ports are full
       if (usage.TC > available.TC) {
         let excess = usage.TC - available.TC;
         const item003 = cart.get('ec01003');
@@ -599,12 +631,20 @@
       }
       while (usage.DOP > available.DOP) { addItem('ec01033', 1); available.DOP += 8; usage.DOP += 1; }
 
+      // Central unit scaling logic
       const boilerCount = state.boilers.filter(b => b.brand).length;
       const logicSum = Math.max(state.mixingValves, state.heatingPumps) + boilerCount + (state.boilerPump ? 1 : 0) + state.zones;
       let finalBaseQty = logicSum >= 39 ? 3 : (logicSum >= 20 ? 2 : 1);
+      
+      // Radio logic: ec01v40 adds +32 Radio slots
+      if (usage.RADIO > finalBaseQty * 32) {
+        finalBaseQty = Math.ceil(usage.RADIO / 32);
+      }
+
       const baseItem = cart.get('ec01v40');
       if (baseItem) baseItem.quantity = finalBaseQty;
 
+      // PSU logic
       if ((cart.get('ec01060')?.quantity >= 1) || (cart.get('ec01025')?.quantity >= 2)) {
         addItem('ec01063', 1); addItem('ec01028', 1);
       }
@@ -625,7 +665,7 @@
         newBoilers[index] = { ...newBoilers[index], [field]: value };
         if (field === 'brand') newBoilers[index].model = '';
         if (field === 'model') {
-           const brandObj = BOILER_BRANDS.find(b => b.name === newBoilers[index].brand);
+           const brandObj = processedBrands.find(b => b.name === newBoilers[index].brand);
            const modelObj = brandObj?.models.find(m => m.name === value);
            if (modelObj) newBoilers[index].type = modelObj.connectionType;
         }
@@ -715,25 +755,27 @@
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Зональное управление и датчики</h3>
           <div className="space-y-8">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности</label><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <label className="font-bold block mb-6 text-center text-ecto-dark">Кол-во датчиков температуры воздуха</label>
+              <label className="font-bold block mb-6 text-center text-ecto-dark">Количество датчиков температуры воздуха</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessRadioSensors} onChange={(v) => onUpdate({ wirelessRadioSensors: v })} /></div>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной LoRa</span><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div>
                  </div>
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium leading-tight text-left mr-2">Свой термостат (сухой контакт)</span><Counter value={state.ownThermostats} onChange={(v) => onUpdate({ ownThermostats: v })} /></div>
                  </div>
               </div>
             </div>
-            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке</label><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
+            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке (температура поверхности пола)</label><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
           </div>
         </div>
     );
@@ -842,14 +884,14 @@
                 <th className="border border-gray-300 p-2 text-ecto-dark">Наименование оборудования</th>
                 <th className="border border-gray-300 p-2 text-ecto-dark">Кол-во</th>
                 <th className="border border-gray-300 p-2 text-ecto-dark">Цена/ед.</th>
-                <th className="border border-gray-300 p-2 w-32 text-ecto-dark">Стоимость</th>
+                <th className="border border-gray-300 p-2 w-48 text-ecto-dark">Стоимость</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, idx) => (
-                <tr key={idx}><td className="border border-gray-300 p-2 text-center font-bold">{idx + 1}</td><td className="border border-gray-300 p-2 text-center font-bold text-gray-600">{item.id}</td><td className="border border-gray-300 p-1 text-center">{item.image && <img src={item.image} alt="" className="w-10 h-10 object-contain mx-auto" />}</td><td className="border border-gray-300 p-2 font-bold text-ecto-dark">{item.name} {item.isManual && <span className="text-gray-400 font-normal ml-2 italic">+ добавлено вручную</span>} {OPTIONAL_ITEMS.includes(item.id) && !item.isManual && <div className="text-gray-400 font-normal italic mt-1">(рекомендуется)</div>}</td><td className="border border-gray-300 p-2 text-center font-bold">{item.quantity}</td><td className="border border-gray-300 p-2 text-right">{item.price.toLocaleString('ru-RU')}</td><td className="border border-gray-300 p-2 text-right font-bold text-ecto-dark">{(item.price * item.quantity).toLocaleString('ru-RU')} ₽</td></tr>
+                <tr key={idx}><td className="border border-gray-300 p-2 text-center font-bold">{idx + 1}</td><td className="border border-gray-300 p-2 text-center font-bold text-gray-600">{item.id}</td><td className="border border-gray-300 p-1 text-center">{item.image && <img src={item.image} alt="" className="w-10 h-10 object-contain mx-auto" />}</td><td className="border border-gray-300 p-2 font-bold text-ecto-dark">{item.name} {item.isManual && <span className="text-gray-400 font-normal ml-2 italic">+ добавлено вручную</span>} {OPTIONAL_ITEMS.includes(item.id) && !item.isManual && <div className="text-gray-400 font-normal italic mt-1">(рекомендуется)</div>}</td><td className="border border-gray-300 p-2 text-center font-bold">{item.quantity}</td><td className="border border-gray-300 p-2 text-right">{item.price.toLocaleString('ru-RU')}</td><td className="border border-gray-300 p-2 text-right font-bold text-ecto-dark whitespace-nowrap">{(item.price * item.quantity).toLocaleString('ru-RU')} ₽</td></tr>
               ))}
-              <tr><td colSpan={6} className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">Стоимость комплекта оборудования*:</td><td className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">{totalPrice.toLocaleString('ru-RU')} ₽</td></tr>
+              <tr><td colSpan={6} className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark">Стоимость комплекта оборудования*:</td><td className="border border-gray-300 p-2 text-right font-bold text-lg text-ecto-dark whitespace-nowrap">{totalPrice.toLocaleString('ru-RU')} ₽</td></tr>
               <tr><td colSpan={7} className="border border-gray-300 p-2 text-center font-bold text-gray-600">Ориентировочное количество модулей на DIN-рейке*: {Math.ceil(totalModules)}</td></tr>
             </tbody>
           </table>
@@ -862,7 +904,37 @@
     };
 
     const App = () => {
-      const [state, setState] = useState({ boilers: [{ brand: '', model: '', id: 'init-1' }], outdoorSensor: false, heatingPumps: 0, boilerPump: false, recirculationPump: false, mixingValves: 0, manifoldServos: 0, zones: 0, zonesWithTwoSources: 0, wiredSensors: 0, wirelessSensors: 0, wiredThermostats: 0, wirelessThermostats: 0, floorSensors: 0, gasSensors: 0, coSensors: 0, pressureSensors: 0, wiredSmokeSensors: 0, wirelessSmokeSensors: 0, wiredLeakSensors: 0, wirelessLeakSensors: 0, wirelessLeakSensorsLora: 0, neptun12: 0, neptun34: 0, neptun1: 0, manualItems: [], hiddenItems: [] });
+      const [state, setState] = useState({ 
+        boilers: [{ brand: '', model: '', id: 'init-1' }], 
+        outdoorSensor: false, 
+        heatingPumps: 0, 
+        boilerPump: false, 
+        recirculationPump: false, 
+        mixingValves: 0, 
+        manifoldServos: 0, 
+        zones: 0, 
+        zonesWithTwoSources: 0, 
+        wiredSensors: 0, 
+        wirelessRadioSensors: 0,
+        wirelessSensors: 0, 
+        wiredThermostats: 0, 
+        wirelessThermostats: 0, 
+        ownThermostats: 0,
+        floorSensors: 0, 
+        gasSensors: 0, 
+        coSensors: 0, 
+        pressureSensors: 0, 
+        wiredSmokeSensors: 0, 
+        wirelessSmokeSensors: 0, 
+        wiredLeakSensors: 0, 
+        wirelessLeakSensors: 0, 
+        wirelessLeakSensorsLora: 0, 
+        neptun12: 0, 
+        neptun34: 0, 
+        neptun1: 0, 
+        manualItems: [], 
+        hiddenItems: [] 
+      });
       const [cartItems, setCartItems] = useState([]);
       const [showResetModal, setShowResetModal] = useState(false);
 
@@ -890,7 +962,7 @@
             </main>
             {showResetModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 no-print">
-                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
+                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessRadioSensors: 0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, ownThermostats: 0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
               </div>
             )}
           </div>
