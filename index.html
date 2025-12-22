@@ -381,7 +381,7 @@
       { name: 'Wattek', models: [{ name: 'Eltek', connectionType: ConnectionType.RELAY }] },
       { name: 'Wert (WertRus)', models: [{ name: 'Eco', connectionType: ConnectionType.RELAY }, { name: 'Nova', connectionType: ConnectionType.RELAY }] },
       { name: 'Wespe Heizung', models: [{ name: 'Complete U', connectionType: ConnectionType.RELAY }, { name: 'Industrial', connectionType: ConnectionType.RELAY }, { name: 'Elite WH L', connectionType: ConnectionType.RELAY }, { name: 'Foreman', connectionType: ConnectionType.RELAY }, { name: 'Kombi', connectionType: ConnectionType.RELAY }, { name: 'Master', connectionType: ConnectionType.RELAY }, { name: 'MF', connectionType: ConnectionType.RELAY }] },
-      { name: 'Wolf', models: [{ name: 'FGB / FGB-K', connectionType: ConnectionType.EBUS }, { name: 'FGG / FGB-K', connectionType: ConnectionType.OPENTHERM }, { name: 'CGG-3 / CGG-3K', connectionType: ConnectionType.EBUS }, { name: 'CGB / CGB-2', connectionType: ConnectionType.EBUS }, { name: 'CGW-2 / CGS-2', connectionType: ConnectionType.EBUS }, { name: 'MGK-2', connectionType: ConnectionType.EBUS }, { name: 'CGG-1K / CGG-2K', connectionType: ConnectionType.EBUS }, { name: 'TGB', connectionType: ConnectionType.RELAY }, { name: 'MKS / CHK / CHU', connectionType: ConnectionType.RELAY }, { name: 'Контроллер R16 Digi compact', connectionType: ConnectionType.EBUS }, { name: 'Контроллер R31/32', connectionType: ConnectionType.RELAY }] },
+      { name: 'Wolf', models: [{ name: 'FGB / FGB-K', connectionType: ConnectionType.EBUS }, { name: 'FGG / FGG-K', connectionType: ConnectionType.OPENTHERM }, { name: 'CGG-3 / CGG-3K', connectionType: ConnectionType.EBUS }, { name: 'CGB / CGB-2', connectionType: ConnectionType.EBUS }, { name: 'CGW-2 / CGS-2', connectionType: ConnectionType.EBUS }, { name: 'MGK-2', connectionType: ConnectionType.EBUS }, { name: 'CGG-1K / CGG-2K', connectionType: ConnectionType.EBUS }, { name: 'TGB', connectionType: ConnectionType.RELAY }, { name: 'MKS / CHK / CHU', connectionType: ConnectionType.RELAY }, { name: 'Контроллер R16 Digi compact', connectionType: ConnectionType.EBUS }, { name: 'Контроллер R31/32', connectionType: ConnectionType.RELAY }] },
       { name: 'Zota', models: [
           { name: 'Solid / Solid-X', connectionType: ConnectionType.OPENTHERM },
           { name: 'LUX-X', connectionType: ConnectionType.OPENTHERM },
@@ -431,18 +431,19 @@
     // --- CONSTRUCT DISPLAY LIST ---
     const PRIORITY_NAMES = ['Baxi', 'Bosch', 'Buderus', 'Ferroli', 'Navien', 'Protherm', 'Vaillant', 'Viessmann', 'Zota', 'Эван'];
     
-    // Process brands: Sort internal model lists and then split into blocks
+    // Process brands: Sort internal model lists
     const processedBrands = RAW_BOILER_BRANDS.filter(b => b.name !== 'Titan').map(brand => ({
       ...brand,
       models: [...brand.models].sort(sortAlphaLatinFirst)
     }));
 
+    // FIRST BLOCK: Priority brands only
     const priorityBlock = processedBrands
         .filter(b => PRIORITY_NAMES.includes(b.name))
         .sort(sortAlphaLatinFirst);
 
+    // SECOND BLOCK: All brands (including priority ones duplicated)
     const otherBlock = processedBrands
-        .filter(b => !PRIORITY_NAMES.includes(b.name))
         .sort(sortAlphaLatinFirst);
 
     const BOILER_BRANDS = [
@@ -699,7 +700,7 @@
                       <label className="block text-xs font-bold text-ecto-lightgray mb-2">Модель</label>
                       <select className="w-full border-b border-gray-300 bg-transparent py-2 focus:outline-none focus:border-ecto-gold disabled:opacity-50 transition-colors text-ecto-dark font-medium" value={boiler.model} onChange={(e) => handleUpdateBoiler(index, 'model', e.target.value)} disabled={!boiler.brand}>
                         <option value="">Выберите модель</option>
-                        {(BOILER_BRANDS.find(b => b.name === boiler.brand)?.models || []).map(m => (
+                        {(processedBrands.find(b => b.name === boiler.brand)?.models || []).map(m => (
                           <option key={m.name} value={m.name}>{m.name}</option>
                         ))}
                       </select>
