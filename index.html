@@ -594,7 +594,7 @@
       usage.RELAY += state.zonesWithTwoSources;
       
       // Air temperature sensors
-      usage.DOP += state.wiredSensors; addItem('ec01002', state.wiredSensors);
+      usage.TC += state.wiredSensors; addItem('ec01001', state.wiredSensors);
       usage.RADIO += state.wirelessRadioSensors; addItem('ec01005', state.wirelessRadioSensors); 
       usage.LORA += state.wirelessSensors; addItem('ec01041', state.wirelessSensors);
       
@@ -628,6 +628,24 @@
 
       state.manualItems.forEach(item => addItem(item.productId, item.quantity, true));
 
+      // Central unit scaling logic
+      const logicSum = Math.max(state.mixingValves, state.heatingPumps) + boilerCount + (state.boilerPump ? 1 : 0) + state.zones;
+      let finalBaseQty = logicSum >= 39 ? 3 : (logicSum >= 20 ? 2 : 1);
+      if (usage.RADIO > finalBaseQty * 32) finalBaseQty = Math.ceil(usage.RADIO / 32);
+      if (usage.PORT123 > finalBaseQty * 2) finalBaseQty = Math.max(finalBaseQty, Math.ceil(usage.PORT123 / 2));
+
+      // Force ec01001 to ec01002 if finalBaseQty >= 2
+      if (finalBaseQty >= 2) {
+        const item001 = cart.get('ec01001');
+        if (item001) {
+          const qty = item001.quantity;
+          cart.delete('ec01001');
+          addItem('ec01002', qty);
+          usage.TC -= qty;
+          usage.DOP += qty;
+        }
+      }
+
       // Resolve adapters and blocks
       if (usage.LORA > available.LORA) {
         const adapters = Math.ceil((usage.LORA - available.LORA) / 32);
@@ -643,34 +661,24 @@
       // Swap TC for DOP if ports are full
       if (usage.TC > available.TC) {
         let excess = usage.TC - available.TC;
-        const item003 = cart.get('ec01003');
-        if (item003 && item003.quantity > state.mixingValves && excess > 0) {
-          const swap = Math.min(item003.quantity - state.mixingValves, excess);
-          item003.quantity -= swap; if(item003.quantity === 0) cart.delete('ec01003');
-          addItem('ec01004', swap); usage.TC -= swap; usage.DOP += swap; excess -= swap;
-        }
+        
+        // Priority 1: Move ec01001 to ec01002 (RS485)
         const item001 = cart.get('ec01001');
         if (item001 && item001.quantity > 0 && excess > 0) {
           const swap = Math.min(item001.quantity, excess);
           item001.quantity -= swap; if(item001.quantity === 0) cart.delete('ec01001');
-          addItem('ec01002', swap); usage.TC -= swap; usage.DOP += swap;
+          addItem('ec01002', swap); usage.TC -= swap; usage.DOP += swap; excess -= swap;
+        }
+
+        // Priority 2: Move ec01003 to ec01004 (RS485)
+        const item003 = cart.get('ec01003');
+        if (item003 && item003.quantity > state.mixingValves && excess > 0) {
+          const swap = Math.min(item003.quantity - state.mixingValves, excess);
+          item003.quantity -= swap; if(item003.quantity === 0) cart.delete('ec01003');
+          addItem('ec01004', swap); usage.TC -= swap; usage.DOP += swap;
         }
       }
       while (usage.DOP > available.DOP) { addItem('ec01033', 1); available.DOP += 8; usage.DOP += 1; }
-
-      // Central unit scaling logic
-      const logicSum = Math.max(state.mixingValves, state.heatingPumps) + boilerCount + (state.boilerPump ? 1 : 0) + state.zones;
-      let finalBaseQty = logicSum >= 39 ? 3 : (logicSum >= 20 ? 2 : 1);
-      
-      // Radio Logic: ec01v40 adds +32 Radio slots
-      if (usage.RADIO > finalBaseQty * 32) {
-        finalBaseQty = Math.ceil(usage.RADIO / 32);
-      }
-
-      // Siren Logic: ec01v40 adds +2 Siren ports
-      if (usage.PORT123 > finalBaseQty * 2) {
-        finalBaseQty = Math.max(finalBaseQty, Math.ceil(usage.PORT123 / 2));
-      }
 
       const baseItem = cart.get('ec01v40');
       if (baseItem) baseItem.quantity = finalBaseQty;
