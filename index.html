@@ -530,6 +530,7 @@
       { id: 'ec01031', name: 'Батарейка (запасная) для датчиков', price: 260, category: 'other', image: 'https://raw.githubusercontent.com/postrigli/ectoControl/main/images_resized/ec01031.jpg', cartId: '93' },
       { id: 'ec01063', name: 'Сетевой адаптер MeanWell 14В 1.5А DIN', price: 2500, category: 'other', image: 'https://raw.githubusercontent.com/postrigli/ectoControl/main/images_resized/ec01063.jpg', dinModules: 2.2, cartId: '133' },
       { id: 'ec01039', name: 'Адаптер питания 14В, 2А', price: 950, category: 'other', image: 'https://raw.githubusercontent.com/postrigli/ectoControl/main/images_resized/ec01039.jpg', cartId: '104' },
+      { id: 'ec01114', name: 'Датчик температуры NTC 10K', price: 990, category: 'sensor', image: 'https://raw.githubusercontent.com/postrigli/ectoControl/main/images_resized/ec01114.jpg', cartId: '162' },
     ];
 
     const findProduct = (id) => {
@@ -603,6 +604,7 @@
       usage.CONTACT += state.ownThermostats; // Dry contact thermostats consumes CONTACT ports
 
       usage.DOP += state.floorSensors; addItem('ec01004', state.floorSensors);
+      addItem('ec01114', state.ntcFloorSensors);
 
       usage.CONTACT += state.gasSensors; addItem('ec01008', state.gasSensors);
       usage.RADIO += state.coSensors; addItem('ec01068', state.coSensors);
@@ -764,15 +766,6 @@
               </button>
             )}
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <label className="flex items-center cursor-pointer group">
-              <div className={`w-6 h-6 border-2 border-gray-300 rounded flex items-center justify-center mr-3 transition-colors group-hover:border-ecto-gold ${outdoorSensor ? 'bg-ecto-gold border-ecto-gold text-white' : 'bg-white'}`}>
-                {outdoorSensor && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
-              </div>
-              <input type="checkbox" className="hidden" checked={outdoorSensor} onChange={(e) => onUpdate({ outdoorSensor: e.target.checked })} />
-              <span className="font-medium text-ecto-dark group-hover:text-ecto-gold transition-colors">Добавить датчик для улицы (ПЗА)</span>
-            </label>
-          </div>
         </div>
       );
     };
@@ -815,7 +808,7 @@
             <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><div className="flex-shrink-0"><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div></div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><div className="flex-shrink-0"><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div></div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <label className="font-bold block mb-6 text-center text-ecto-dark">Количество датчиков температуры воздуха</label>
+              <label className="font-bold block mb-6 text-center text-ecto-dark">Количество датчиков температуры</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
@@ -825,12 +818,28 @@
                  </div>
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredThermostats} onChange={(v) => { const updates = { wiredThermostats: v }; if (state.ntcFloorSensors > v) updates.ntcFloorSensors = v; onUpdate(updates); }} /></div></div>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div></div>
                  </div>
               </div>
+              <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+                <span className="text-sm font-medium pr-2">Датчик температуры пола (в стяжке)</span>
+                <div className="flex-shrink-0"><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <span className="text-sm font-medium pr-2">Датчик температуры пола NTC (для проводного термостата)</span>
+                <div className="flex-shrink-0"><Counter value={state.ntcFloorSensors} onChange={(v) => onUpdate({ ntcFloorSensors: v })} max={state.wiredThermostats} /></div>
+              </div>
             </div>
-            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке (температура поверхности пола)</label><div className="flex-shrink-0"><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div></div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <label className="flex items-center cursor-pointer group">
+              <div className={`w-6 h-6 border-2 border-gray-300 rounded flex items-center justify-center mr-3 transition-colors group-hover:border-ecto-gold ${state.outdoorSensor ? 'bg-ecto-gold border-ecto-gold text-white' : 'bg-white'}`}>
+                {state.outdoorSensor && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+              </div>
+              <input type="checkbox" className="hidden" checked={state.outdoorSensor} onChange={(e) => onUpdate({ outdoorSensor: e.target.checked })} />
+              <span className="font-medium text-ecto-dark group-hover:text-ecto-gold transition-colors">Добавить датчик для улицы (ПЗА)</span>
+            </label>
           </div>
         </div>
     );
@@ -1022,6 +1031,7 @@
         wirelessThermostats: 0, 
         ownThermostats: 0,
         floorSensors: 0, 
+        ntcFloorSensors: 0, 
         gasSensors: 0, 
         coSensors: 0, 
         pressureSensors: 0, 
@@ -1068,7 +1078,7 @@
             </main>
             {showResetModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 no-print">
-                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessRadioSensors: 0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, ownThermostats: 0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredMotionSensors: 0, wirelessMotionSensors: 0, wiredSirens: 0, combinedSirens: 0, wirelessKeyfobs: 0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
+                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessRadioSensors: 0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, ownThermostats: 0, floorSensors:0, ntcFloorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredMotionSensors: 0, wirelessMotionSensors: 0, wiredSirens: 0, combinedSirens: 0, wirelessKeyfobs: 0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
               </div>
             )}
           </div>
