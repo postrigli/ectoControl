@@ -218,7 +218,7 @@
           { name: 'Pegasus D', connectionType: ConnectionType.OPENTHERM },
           { name: 'Vitabel HF, C, F', connectionType: ConnectionType.OPENTHERM },
           { name: 'Atlas, D', connectionType: ConnectionType.RELAY },
-          { name: 'Tor', connectionType: ConnectionType.RELAY },
+          { name: 'Tor', connectionType: ConnectionType.OPENTHERM },
           { name: 'Tantaqua N EL', connectionType: ConnectionType.RELAY },
           { name: 'Domina', connectionType: ConnectionType.RELAY },
           { name: 'Fortuna PRO / SPECIAL', connectionType: ConnectionType.RELAY },
@@ -539,8 +539,8 @@
         else cart.set(id, { ...product, quantity: qty, isManual });
       };
 
-      const usage = { RELAY: 0, CONTACT: 0, TC: 0, DOP: 0, RADIO: 0, LORA: 0, MIXER: 0, TS: 0 };
-      const available = { RELAY: 3, CONTACT: 5, TC: 3, DOP: 1, RADIO: 32, LORA: 0, MIXER: 0, TS: 0 };
+      const usage = { RELAY: 0, CONTACT: 0, TC: 0, DOP: 0, RADIO: 0, LORA: 0, MIXER: 0, TS: 0, PORT123: 0 };
+      const available = { RELAY: 3, CONTACT: 5, TC: 3, DOP: 1, RADIO: 32, LORA: 0, MIXER: 0, TS: 0, PORT123: 2 };
 
       // Initial unit added first to Map to maintain top position
       addItem('ec01v40', 1);
@@ -603,6 +603,13 @@
       usage.RADIO += state.wirelessLeakSensors; addItem('ec01007', state.wirelessLeakSensors);
       usage.LORA += state.wirelessLeakSensorsLora; addItem('ec01056', state.wirelessLeakSensorsLora);
 
+      // Security
+      usage.CONTACT += state.wiredMotionSensors; addItem('ec01013', state.wiredMotionSensors);
+      usage.RADIO += state.wirelessMotionSensors; addItem('ec01014', state.wirelessMotionSensors);
+      usage.PORT123 += state.wiredSirens; addItem('ec01016', state.wiredSirens);
+      usage.PORT123 += state.combinedSirens; addItem('ec01016-1', state.combinedSirens);
+      usage.RADIO += state.wirelessKeyfobs; addItem('ec01019', state.wirelessKeyfobs);
+
       usage.RELAY += state.neptun12; addItem('ec01111', state.neptun12);
       usage.RELAY += state.neptun34; addItem('ec01112', state.neptun34);
       usage.RELAY += state.neptun1; addItem('ec01113', state.neptun1);
@@ -646,6 +653,11 @@
       // Radio Logic: ec01v40 adds +32 Radio slots
       if (usage.RADIO > finalBaseQty * 32) {
         finalBaseQty = Math.ceil(usage.RADIO / 32);
+      }
+
+      // Siren Logic: ec01v40 adds +2 Siren ports
+      if (usage.PORT123 > finalBaseQty * 2) {
+        finalBaseQty = Math.max(finalBaseQty, Math.ceil(usage.PORT123 / 2));
       }
 
       const baseItem = cart.get('ec01v40');
@@ -778,7 +790,6 @@
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div>
                    <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium leading-tight text-left mr-2">Свой термостат (сухой контакт)</span><Counter value={state.ownThermostats} onChange={(v) => onUpdate({ ownThermostats: v })} /></div>
                  </div>
               </div>
             </div>
@@ -790,19 +801,32 @@
     const Safety = ({ state, onUpdate }) => (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 mb-8">
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl"><label className="font-medium text-ecto-dark">Датчик утечки газа</label><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div>
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl"><label className="font-medium text-ecto-dark">Датчик угарного газа</label><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div>
+          <div className="space-y-4 mb-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
+            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Датчик утечки газа</label><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Датчик угарного газа</label><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Контроль давления</label><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+          <div className="space-y-10">
              <div className="space-y-4">
                 <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Пожарные датчики</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик дыма (проводной)</span><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик дыма (беспроводной)</span><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
              </div>
-             <div className="flex flex-col justify-start">
-                <label className="font-bold block mb-4 text-sm text-ecto-lightgray uppercase tracking-wider">Контроль давления</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Количество</span><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
+             <div className="space-y-4 pt-8 border-t border-gray-100">
+                <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Охранные датчики</label>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик движения (проводной)</span><Counter value={state.wiredMotionSensors} onChange={(v) => onUpdate({ wiredMotionSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик движения (беспроводной)</span><Counter value={state.wirelessMotionSensors} onChange={(v) => onUpdate({ wirelessMotionSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Брелок (беспроводной)</span><Counter value={state.wirelessKeyfobs} onChange={(v) => onUpdate({ wirelessKeyfobs: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-sm font-medium">Сирена (проводная)</span>
+                  <Counter 
+                    value={state.combinedSirens} 
+                    onChange={(v) => {
+                      if (v + state.wiredSirens <= 2) onUpdate({ combinedSirens: v });
+                    }} 
+                    max={2} 
+                  />
+                </div>
              </div>
           </div>
           <div className="mt-10 pt-8 border-t border-gray-100">
@@ -963,6 +987,11 @@
         pressureSensors: 0, 
         wiredSmokeSensors: 0, 
         wirelessSmokeSensors: 0, 
+        wiredMotionSensors: 0,
+        wirelessMotionSensors: 0,
+        wiredSirens: 0,
+        combinedSirens: 0,
+        wirelessKeyfobs: 0,
         wiredLeakSensors: 0, 
         wirelessLeakSensors: 0, 
         wirelessLeakSensorsLora: 0, 
@@ -999,7 +1028,7 @@
             </main>
             {showResetModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 no-print">
-                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessRadioSensors: 0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, ownThermostats: 0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
+                 <div className="bg-white p-8 rounded-2xl max-w-sm w-full m-4 shadow-2xl text-center"><h3 className="text-xl font-bold mb-2">Очистить всё?</h3><div className="flex gap-3 justify-center mt-6"><button onClick={() => setShowResetModal(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">Нет</button><button onClick={() => { setState({ boilers:[{brand:'',model:'',id:'init-1'}], outdoorSensor:false, heatingPumps:0, boilerPump:false, recirculationPump:false, mixingValves:0, manifoldServos:0, zones:0, zonesWithTwoSources:0, wiredSensors:0, wirelessRadioSensors: 0, wirelessSensors:0, wiredThermostats:0, wirelessThermostats:0, ownThermostats: 0, floorSensors:0, gasSensors:0, coSensors:0, pressureSensors:0, wiredSmokeSensors:0, wirelessSmokeSensors:0, wiredMotionSensors: 0, wirelessMotionSensors: 0, wiredSirens: 0, combinedSirens: 0, wirelessKeyfobs: 0, wiredLeakSensors:0, wirelessLeakSensors:0, wirelessLeakSensorsLora:0, neptun12:0, neptun34:0, neptun1:0, manualItems:[], hiddenItems:[] }); setShowResetModal(false); }} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl">Да</button></div></div>
               </div>
             )}
           </div>
