@@ -52,6 +52,16 @@
       ::-webkit-scrollbar { display: none; }
     }
     .print-only { display: none; }
+
+    /* Hide number input arrows */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
     
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -670,13 +680,40 @@
       return Array.from(cart.values());
     };
 
-    const Counter = ({ value, onChange, min = 0, max = 100 }) => (
-      <div className="flex items-center space-x-3">
-        <button className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" onClick={() => onChange(Math.max(min, value - 1))}>-</button>
-        <span className="w-12 text-center font-bold text-lg text-ecto-dark select-none">{value}</span>
-        <button className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" onClick={() => onChange(Math.min(max, value + 1))}>+</button>
-      </div>
-    );
+    const Counter = ({ value, onChange, min = 0, max = 100 }) => {
+      const handleInputChange = (e) => {
+        let val = parseInt(e.target.value);
+        if (isNaN(val)) val = 0;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        onChange(val);
+      };
+
+      return (
+        <div className="flex items-center space-x-3">
+          <button 
+            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
+            onClick={() => onChange(Math.max(min, value - 1))}
+          >
+            -
+          </button>
+          <input 
+            type="number"
+            min={min}
+            max={max}
+            value={value}
+            onChange={handleInputChange}
+            className="w-12 text-center font-bold text-lg text-ecto-dark bg-transparent border-none focus:outline-none"
+          />
+          <button 
+            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
+            onClick={() => onChange(Math.min(max, value + 1))}
+          >
+            +
+          </button>
+        </div>
+      );
+    };
 
     const BoilerSection = ({ boilers, outdoorSensor, onUpdate }) => {
       const handleUpdateBoiler = (index, field, value) => {
@@ -746,7 +783,7 @@
           <div className="space-y-8">
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
               <label className="font-medium text-ecto-dark max-w-[70%]">Количество насосов отопления<br/><span className="text-sm font-normal text-ecto-lightgray">(кроме бойлера)</span></label>
-              <Counter value={state.heatingPumps} onChange={(v) => onUpdate({ heatingPumps: v })} max={20} />
+              <div className="flex-shrink-0"><Counter value={state.heatingPumps} onChange={(v) => onUpdate({ heatingPumps: v })} max={20} /></div>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
               <label className="font-medium text-ecto-dark">Насос загрузки бойлера</label>
@@ -764,7 +801,7 @@
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
               <label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов на<br/>3-ходовых клапанах</label>
-              <Counter value={state.mixingValves} onChange={(v) => onUpdate({ mixingValves: v })} max={20} />
+              <div className="flex-shrink-0"><Counter value={state.mixingValves} onChange={(v) => onUpdate({ mixingValves: v })} max={20} /></div>
             </div>
           </div>
         </div>
@@ -774,26 +811,26 @@
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Зональное управление и датчики</h3>
           <div className="space-y-8">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности</label><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности</label><div className="flex-shrink-0"><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><div className="flex-shrink-0"><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><div className="flex-shrink-0"><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div></div>
             <div className="bg-gray-50 rounded-xl p-6">
               <label className="font-bold block mb-6 text-center text-ecto-dark">Количество датчиков температуры воздуха</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessRadioSensors} onChange={(v) => onUpdate({ wirelessRadioSensors: v })} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной LoRa</span><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessRadioSensors} onChange={(v) => onUpdate({ wirelessRadioSensors: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной LoRa</span><div className="flex-shrink-0"><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div></div>
                  </div>
                  <div className="space-y-4">
                    <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredThermostats} onChange={(v) => onUpdate({ wiredThermostats: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div></div>
                  </div>
               </div>
             </div>
-            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке (температура поверхности пола)</label><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
+            <div className="flex justify-between items-center pt-4"><label className="font-medium text-ecto-dark max-w-[70%]">Кол-во датчиков в стяжке (температура поверхности пола)</label><div className="flex-shrink-0"><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div></div>
           </div>
         </div>
     );
@@ -801,31 +838,34 @@
     const Safety = ({ state, onUpdate }) => (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
-          <div className="space-y-4 mb-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
-            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Датчик утечки газа</label><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Датчик угарного газа</label><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0"><label className="font-medium text-ecto-dark whitespace-nowrap">Контроль давления</label><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
+          <div className="space-y-4 mb-8">
+            <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Для котельной</label>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark pr-2">Датчик утечки газа</label><div className="flex-shrink-0"><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark pr-2">Датчик угарного газа</label><div className="flex-shrink-0"><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><label className="font-medium text-ecto-dark pr-2">Контроль давления</label><div className="flex-shrink-0"><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div></div>
           </div>
           <div className="space-y-10">
              <div className="space-y-4">
                 <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Пожарные датчики</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик дыма (проводной)</span><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик дыма (беспроводной)</span><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик дыма (проводной)</span><div className="flex-shrink-0"><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик дыма (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div></div>
              </div>
              <div className="space-y-4 pt-8 border-t border-gray-100">
                 <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Охранные датчики</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик движения (проводной)</span><Counter value={state.wiredMotionSensors} onChange={(v) => onUpdate({ wiredMotionSensors: v })} max={32} /></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Датчик движения (беспроводной)</span><Counter value={state.wirelessMotionSensors} onChange={(v) => onUpdate({ wirelessMotionSensors: v })} max={32} /></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium">Брелок (беспроводной)</span><Counter value={state.wirelessKeyfobs} onChange={(v) => onUpdate({ wirelessKeyfobs: v })} max={32} /></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик движения (проводной)</span><div className="flex-shrink-0"><Counter value={state.wiredMotionSensors} onChange={(v) => onUpdate({ wiredMotionSensors: v })} max={32} /></div></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик движения (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessMotionSensors} onChange={(v) => onUpdate({ wirelessMotionSensors: v })} max={32} /></div></div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Брелок (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessKeyfobs} onChange={(v) => onUpdate({ wirelessKeyfobs: v })} max={32} /></div></div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                  <span className="text-sm font-medium">Сирена (проводная)</span>
-                  <Counter 
-                    value={state.combinedSirens} 
-                    onChange={(v) => {
-                      if (v + state.wiredSirens <= 2) onUpdate({ combinedSirens: v });
-                    }} 
-                    max={2} 
-                  />
+                  <span className="text-sm font-medium pr-2">Сирена (проводная)</span>
+                  <div className="flex-shrink-0">
+                    <Counter 
+                      value={state.combinedSirens} 
+                      onChange={(v) => {
+                        if (v + state.wiredSirens <= 2) onUpdate({ combinedSirens: v });
+                      }} 
+                      max={2} 
+                    />
+                  </div>
                 </div>
              </div>
           </div>
@@ -834,9 +874,9 @@
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="space-y-4">
                    <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider">Датчики</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Проводной</span><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">Беспроводной</span><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium">LoRa</span><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">LoRa</span><div className="flex-shrink-0"><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div></div>
                  </div>
                  <div className="col-span-2 space-y-4">
                    <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider text-center">Сервоприводы Neptun</h4>
