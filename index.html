@@ -700,9 +700,9 @@
       };
 
       return (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between w-[90px] md:w-[112px] flex-shrink-0">
           <button 
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
+            className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
             onClick={() => onChange(Math.max(min, value - 1))}
           >
             -
@@ -713,10 +713,10 @@
             max={max}
             value={value}
             onChange={handleInputChange}
-            className="w-12 text-center font-bold text-lg text-ecto-dark bg-transparent border-none focus:outline-none"
+            className="w-8 md:w-10 flex-shrink-0 text-center font-bold text-base md:text-lg text-ecto-dark bg-transparent border-none focus:outline-none p-0 m-0"
           />
           <button 
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
+            className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0 flex items-center justify-center border border-gray-200 rounded-full hover:bg-gray-50 bg-white text-ecto-dark font-medium shadow-sm transition-colors" 
             onClick={() => onChange(Math.min(max, value + 1))}
           >
             +
@@ -739,10 +739,10 @@
       };
 
       return (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Источник тепла</h3>
           <div className="space-y-6">
-            <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Котел</label>
+            <label className="font-bold block text-sm md:text-base text-ecto-lightgray uppercase tracking-wider">Котел</label>
             {boilers.map((boiler, index) => (
                 <div key={boiler.id} className="bg-gray-50 p-6 rounded-xl border border-gray-100 transition-all hover:shadow-md">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -769,7 +769,7 @@
                 </div>
             ))}
             {boilers.length < 5 && (
-              <button onClick={() => onUpdate({ boilers: [...boilers, { brand: '', model: '', id: Date.now().toString() }] })} className="flex items-center text-sm font-bold text-ecto-blue hover:text-ecto-gold transition-colors mt-2">
+              <button onClick={() => onUpdate({ boilers: [...boilers, { brand: '', model: '', id: Date.now().toString() }] })} className="flex items-center text-base font-bold text-ecto-blue hover:text-ecto-gold transition-colors mt-2">
                 <div className="w-6 h-6 border-2 border-current flex items-center justify-center mr-2 rounded-full text-lg leading-none pb-0.5">+</div>ДОБАВИТЬ КОТЕЛ
               </button>
             )}
@@ -779,29 +779,29 @@
     };
 
     const BoilerRoom = ({ state, onUpdate }) => (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Оборудование котельной</h3>
           <div className="space-y-8">
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-              <label className="font-medium text-ecto-dark max-w-[70%]">Количество насосов отопления<br/><span className="text-sm font-normal text-ecto-lightgray">(кроме бойлера)</span></label>
+              <label className="text-sm md:text-base font-medium text-ecto-dark max-w-[70%]">Количество насосов отопления<br/><span className="text-xs md:text-sm font-normal text-ecto-lightgray">(кроме бойлера)</span></label>
               <div className="flex-shrink-0"><Counter value={state.heatingPumps} onChange={(v) => onUpdate({ heatingPumps: v })} max={20} /></div>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-              <label className="font-medium text-ecto-dark">Насос загрузки бойлера</label>
+              <label className="text-sm md:text-base font-medium text-ecto-dark">Насос загрузки бойлера</label>
               <label className="cursor-pointer">
                 <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.boilerPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.boilerPump ? 'translate-x-6' : ''}`}></div></div>
                 <input type="checkbox" className="hidden" checked={state.boilerPump} onChange={(e) => onUpdate({ boilerPump: e.target.checked })} />
               </label>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-              <label className="font-medium text-ecto-dark">Насос рециркуляции</label>
+              <label className="text-sm md:text-base font-medium text-ecto-dark">Насос рециркуляции</label>
               <label className="cursor-pointer">
                 <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${state.recirculationPump ? 'bg-ecto-gold' : 'bg-gray-200'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${state.recirculationPump ? 'translate-x-6' : ''}`}></div></div>
                 <input type="checkbox" className="hidden" checked={state.recirculationPump} onChange={(e) => onUpdate({ recirculationPump: e.target.checked })} />
               </label>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-              <label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов на<br/>3-ходовых клапанах</label>
+              <label className="text-sm md:text-base font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов на<br/>3-ходовых клапанах</label>
               <div className="flex-shrink-0"><Counter value={state.mixingValves} onChange={(v) => onUpdate({ mixingValves: v })} max={20} /></div>
             </div>
           </div>
@@ -809,33 +809,33 @@
     );
 
     const Zoning = ({ state, onUpdate }) => (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100 mb-8">
           <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Зональное управление и датчики</h3>
           <div className="space-y-8">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько зон/помещений нужно управлять по отдельности</label><div className="flex-shrink-0"><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Сколько из них имеют одновременно<br/>два источника тепла: теплый пол и радиаторы</label><div className="flex-shrink-0"><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark max-w-[70%]">Количество сервоприводов<br/>для коллектора/гребёнки</label><div className="flex-shrink-0"><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div></div>
-            <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="text-sm md:text-base font-medium text-ecto-dark max-w-[70%]">Сколько всего зон/помещений нужно управлять по отдельности</label><div className="flex-shrink-0"><Counter value={state.zones} onChange={(v) => onUpdate({ zones: v })} max={64} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="text-sm md:text-base font-medium text-ecto-dark max-w-[70%]">Сколько из этих зон имеют одновременно:<br/>и теплый пол и радиаторы</label><div className="flex-shrink-0"><Counter value={state.zonesWithTwoSources} onChange={(v) => onUpdate({ zonesWithTwoSources: v })} max={state.zones} /></div></div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="text-sm md:text-base font-medium text-ecto-dark max-w-[70%]">Добавить сервоприводы<br/>для коллектора/гребёнки</label><div className="flex-shrink-0"><Counter value={state.manifoldServos} onChange={(v) => onUpdate({ manifoldServos: v })} max={64} /></div></div>
+            <div className="bg-gray-50 rounded-xl p-4 md:p-6">
               <label className="font-bold block mb-6 text-center text-ecto-dark">Количество датчиков температуры</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center">
                  <div className="space-y-4">
-                   <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessRadioSensors} onChange={(v) => onUpdate({ wirelessRadioSensors: v })} /></div></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной LoRa</span><div className="flex-shrink-0"><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div></div>
+                   <h4 className="font-bold text-sm md:text-base text-ecto-lightgray uppercase tracking-wider">Датчики</h4>
+                   <div className="flex justify-between items-center"><span className="text-sm md:text-base font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredSensors} onChange={(v) => onUpdate({ wiredSensors: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm md:text-base font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessRadioSensors} onChange={(v) => onUpdate({ wirelessRadioSensors: v })} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm md:text-base font-medium pr-2">Беспроводной LoRa</span><div className="flex-shrink-0"><Counter value={state.wirelessSensors} onChange={(v) => onUpdate({ wirelessSensors: v })} /></div></div>
                  </div>
                  <div className="space-y-4">
-                   <h4 className="font-bold text-sm text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredThermostats} onChange={(v) => { const updates = { wiredThermostats: v }; if (state.ntcFloorSensors > v) updates.ntcFloorSensors = v; onUpdate(updates); }} /></div></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div></div>
+                   <h4 className="font-bold text-sm md:text-base text-ecto-lightgray uppercase tracking-wider">Термостат</h4>
+                   <div className="flex justify-between items-center"><span className="text-sm md:text-base font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredThermostats} onChange={(v) => { const updates = { wiredThermostats: v }; if (state.ntcFloorSensors > v) updates.ntcFloorSensors = v; onUpdate(updates); }} /></div></div>
+                   <div className="flex justify-between items-center"><span className="text-sm md:text-base font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessThermostats} onChange={(v) => onUpdate({ wirelessThermostats: v })} /></div></div>
                  </div>
               </div>
               <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-sm font-medium pr-2">Датчик температуры пола (в стяжке)</span>
+                <span className="text-sm md:text-base font-medium pr-2">Датчик температуры пола в стяжке<br/><span className="text-xs md:text-sm font-normal text-ecto-lightgray">(для зон без проводного термостата)</span></span>
                 <div className="flex-shrink-0"><Counter value={state.floorSensors} onChange={(v) => onUpdate({ floorSensors: v })} /></div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-sm font-medium pr-2">Датчик температуры пола NTC (для проводного термостата)</span>
+                <span className="text-sm md:text-base font-medium pr-2">Датчик температуры пола в стяжке<br/><span className="text-xs md:text-sm font-normal text-ecto-lightgray">(для проводного термостата)</span></span>
                 <div className="flex-shrink-0"><Counter value={state.ntcFloorSensors} onChange={(v) => onUpdate({ ntcFloorSensors: v })} max={state.wiredThermostats} /></div>
               </div>
             </div>
@@ -846,63 +846,116 @@
                 {state.outdoorSensor && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
               </div>
               <input type="checkbox" className="hidden" checked={state.outdoorSensor} onChange={(e) => onUpdate({ outdoorSensor: e.target.checked })} />
-              <span className="font-medium text-ecto-dark group-hover:text-ecto-gold transition-colors">Добавить датчик для улицы (ПЗА)</span>
+              <span className="text-sm md:text-base font-medium text-ecto-dark group-hover:text-ecto-gold transition-colors">Добавить датчик для улицы (ПЗА)</span>
             </label>
           </div>
         </div>
     );
 
     const Safety = ({ state, onUpdate }) => (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
-          <div className="space-y-4 mb-8">
-            <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Для котельной</label>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark pr-2">Датчик утечки газа</label><div className="flex-shrink-0"><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50"><label className="font-medium text-ecto-dark pr-2">Датчик угарного газа</label><div className="flex-shrink-0"><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div></div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><label className="font-medium text-ecto-dark pr-2">Контроль давления</label><div className="flex-shrink-0"><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div></div>
+        <div className="space-y-8 mb-8">
+          {/* Block 1: Boiler Safety */}
+          <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold uppercase mb-6 text-ecto-dark">Безопасность</h3>
+            <div className="space-y-4">
+              <label className="text-sm md:text-base font-bold uppercase mb-6 text-ecto-lightgray tracking-wider block">ДЛЯ КОТЕЛЬНОЙ</label>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <label className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик утечки газа</label>
+                <div className="flex-shrink-0"><Counter value={state.gasSensors} onChange={(v) => onUpdate({ gasSensors: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <label className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик угарного газа</label>
+                <div className="flex-shrink-0"><Counter value={state.coSensors} onChange={(v) => onUpdate({ coSensors: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                <label className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Контроль давления</label>
+                <div className="flex-shrink-0"><Counter value={state.pressureSensors} onChange={(v) => onUpdate({ pressureSensors: v })} max={32} /></div>
+              </div>
+            </div>
           </div>
-          <div className="space-y-10">
-             <div className="space-y-4">
-                <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Пожарные датчики</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик дыма (проводной)</span><div className="flex-shrink-0"><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик дыма (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div></div>
-             </div>
-             <div className="space-y-4 pt-8 border-t border-gray-100">
-                <label className="font-bold block text-sm text-ecto-lightgray uppercase tracking-wider">Охранные датчики</label>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик движения (проводной)</span><div className="flex-shrink-0"><Counter value={state.wiredMotionSensors} onChange={(v) => onUpdate({ wiredMotionSensors: v })} max={32} /></div></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Датчик движения (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessMotionSensors} onChange={(v) => onUpdate({ wirelessMotionSensors: v })} max={32} /></div></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50"><span className="text-sm font-medium pr-2">Брелок (беспроводной)</span><div className="flex-shrink-0"><Counter value={state.wirelessKeyfobs} onChange={(v) => onUpdate({ wirelessKeyfobs: v })} max={32} /></div></div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                  <span className="text-sm font-medium pr-2">Сирена (проводная)</span>
-                  <div className="flex-shrink-0">
-                    <Counter 
-                      value={state.combinedSirens} 
-                      onChange={(v) => {
-                        if (v + state.wiredSirens <= 2) onUpdate({ combinedSirens: v });
-                      }} 
-                      max={2} 
-                    />
+
+          {/* Block 2: Fire Sensors */}
+          <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-sm md:text-base font-bold uppercase mb-6 text-ecto-lightgray tracking-wider">Пожарные датчики</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик дыма (проводной)</span>
+                <div className="flex-shrink-0"><Counter value={state.wiredSmokeSensors} onChange={(v) => onUpdate({ wiredSmokeSensors: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик дыма (беспроводной)</span>
+                <div className="flex-shrink-0"><Counter value={state.wirelessSmokeSensors} onChange={(v) => onUpdate({ wirelessSmokeSensors: v })} max={32} /></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Block 3: Security Sensors */}
+          <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-sm md:text-base font-bold uppercase mb-6 text-ecto-lightgray tracking-wider">Охранные датчики</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик движения (проводной)</span>
+                <div className="flex-shrink-0"><Counter value={state.wiredMotionSensors} onChange={(v) => onUpdate({ wiredMotionSensors: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Датчик движения (беспроводной)</span>
+                <div className="flex-shrink-0"><Counter value={state.wirelessMotionSensors} onChange={(v) => onUpdate({ wirelessMotionSensors: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Брелок (беспроводной)</span>
+                <div className="flex-shrink-0"><Counter value={state.wirelessKeyfobs} onChange={(v) => onUpdate({ wirelessKeyfobs: v })} max={32} /></div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Сирена (проводная)</span>
+                <div className="flex-shrink-0">
+                  <Counter 
+                    value={state.combinedSirens} 
+                    onChange={(v) => {
+                      if (v + state.wiredSirens <= 2) onUpdate({ combinedSirens: v });
+                    }} 
+                    max={2} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Block 4: Water Leak Control */}
+          <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-sm md:text-base font-bold uppercase mb-6 text-ecto-lightgray tracking-wider">КОНТРОЛЬ ПРОТЕЧКИ ВОДЫ</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-4">
+                <h4 className="font-bold text-sm md:text-base uppercase text-ecto-lightgray tracking-widest mb-2">Датчики</h4>
+                <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Проводной</span>
+                  <div className="flex-shrink-0"><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Беспроводной</span>
+                  <div className="flex-shrink-0"><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">LoRa</span>
+                  <div className="flex-shrink-0"><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div>
+                </div>
+              </div>
+              <div className="col-span-2 space-y-4">
+                <h4 className="font-bold text-sm md:text-base uppercase text-ecto-lightgray tracking-widest text-center mb-2">Сервоприводы Neptun</h4>
+                <div className="flex flex-col sm:flex-row justify-around items-center gap-6 sm:gap-0 bg-gray-50 rounded-xl p-6 border border-gray-100">
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold mb-3 text-ecto-dark">1/2"</span>
+                    <Counter value={state.neptun12} onChange={(v) => onUpdate({ neptun12: v })} max={32} />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold mb-3 text-ecto-dark">3/4"</span>
+                    <Counter value={state.neptun34} onChange={(v) => onUpdate({ neptun34: v })} max={32} />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold mb-3 text-ecto-dark">1"</span>
+                    <Counter value={state.neptun1} onChange={(v) => onUpdate({ neptun1: v })} max={32} />
                   </div>
                 </div>
-             </div>
-          </div>
-          <div className="mt-10 pt-8 border-t border-gray-100">
-            <label className="font-bold block mb-6 text-ecto-dark">Контроль протечки воды</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 <div className="space-y-4">
-                   <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider">Датчики</h4>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Проводной</span><div className="flex-shrink-0"><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">Беспроводной</span><div className="flex-shrink-0"><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div></div>
-                   <div className="flex justify-between items-center"><span className="text-sm font-medium pr-2">LoRa</span><div className="flex-shrink-0"><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div></div>
-                 </div>
-                 <div className="col-span-2 space-y-4">
-                   <h4 className="font-bold text-xs uppercase text-ecto-lightgray tracking-wider text-center">Сервоприводы Neptun</h4>
-                   <div className="flex flex-col sm:flex-row justify-around items-center gap-6 sm:gap-0 bg-gray-50 rounded-xl p-4">
-                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">1/2"</span><Counter value={state.neptun12} onChange={(v) => onUpdate({ neptun12: v })} max={32} /></div>
-                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">3/4"</span><Counter value={state.neptun34} onChange={(v) => onUpdate({ neptun34: v })} max={32} /></div>
-                      <div className="flex flex-col items-center"><span className="text-sm font-bold mb-2">1"</span><Counter value={state.neptun1} onChange={(v) => onUpdate({ neptun1: v })} max={32} /></div>
-                   </div>
-                 </div>
+              </div>
             </div>
           </div>
         </div>
@@ -938,7 +991,7 @@
       return (
         <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 relative h-full flex flex-col">
           <h2 className="text-xl font-bold mb-4 text-ecto-dark">Ваш комплект</h2>
-          <div className="flex-grow overflow-y-auto max-h-[60vh] pr-2 space-y-4 custom-scrollbar">
+          <div className="flex-grow overflow-y-auto max-h-[55vh] pr-2 space-y-4 custom-scrollbar">
             {items.length === 0 && <p className="text-gray-400 text-sm text-center py-8">Корзина пуста</p>}
             {items.map((item, idx) => (
               <div key={item.id + idx} className="flex justify-between items-start text-sm border-b border-gray-50 pb-3 gap-3 last:border-0 group">
@@ -1076,9 +1129,18 @@
       return (
         <React.Fragment>
           <div className="min-h-screen flex flex-col font-sans print:hidden bg-[#F9FAFB] text-ecto-dark selection:bg-ecto-gold/20">
-            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" /><button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm hover:bg-ecto-dark hover:text-white transition-all">СБРОСИТЬ</button></header>
+            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" /></header>
             <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
-              <div className="mb-6 no-print"><a href="https://ectocontrol.ru/ready-made-solutions" className="inline-flex items-center text-gray-500 hover:text-ecto-gold font-medium text-sm"><svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>вернуться к странице Продукция</a></div>
+              <div className="mb-6 no-print flex justify-between items-center">
+                <div className="text-gray-500 font-medium text-base flex items-center gap-2">
+                  <a href="https://ectocontrol.ru/" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Главная</a>
+                  <span className="text-gray-400">—</span>
+                  <a href="https://ectocontrol.ru/ready-made-solutions" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Продукция</a>
+                  <span className="text-gray-400">—</span>
+                  <span className="text-gray-400">Конфигуратор</span>
+                </div>
+                <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-base hover:bg-ecto-dark hover:text-white transition-all">СБРОСИТЬ</button>
+              </div>
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-grow lg:w-2/3"><BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={(u)=>setState(p=>({...p,...u}))} /><BoilerRoom state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Zoning state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Safety state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /></div>
                 <div className="lg:w-1/3 relative z-10"><div className="sticky top-24"><Cart items={cartItems} onManualAdd={handleManualAdd} onRemoveItem={handleRemoveItem} /></div></div>
