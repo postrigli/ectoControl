@@ -923,37 +923,35 @@
           {/* Block 4: Water Leak Control */}
           <div className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-gray-100">
             <h3 className="text-sm md:text-base font-bold uppercase mb-6 text-ecto-lightgray tracking-wider">КОНТРОЛЬ ПРОТЕЧКИ ВОДЫ</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h4 className="font-bold text-sm md:text-base uppercase text-ecto-lightgray tracking-widest mb-2">Датчики</h4>
-                <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Проводной</span>
                   <div className="flex-shrink-0"><Counter value={state.wiredLeakSensors} onChange={(v) => onUpdate({ wiredLeakSensors: v })} max={32} /></div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Беспроводной</span>
                   <div className="flex-shrink-0"><Counter value={state.wirelessLeakSensors} onChange={(v) => onUpdate({ wirelessLeakSensors: v })} max={32} /></div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
+                <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                   <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">LoRa</span>
                   <div className="flex-shrink-0"><Counter value={state.wirelessLeakSensorsLora} onChange={(v) => onUpdate({ wirelessLeakSensorsLora: v })} max={32} /></div>
                 </div>
               </div>
-              <div className="col-span-2 space-y-4">
-                <h4 className="font-bold text-sm md:text-base uppercase text-ecto-lightgray tracking-widest text-center mb-2">Сервоприводы Neptun</h4>
-                <div className="flex flex-col sm:flex-row justify-around items-center gap-6 sm:gap-0 bg-gray-50 rounded-xl p-6 border border-gray-100">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold mb-3 text-ecto-dark">1/2"</span>
-                    <Counter value={state.neptun12} onChange={(v) => onUpdate({ neptun12: v })} max={32} />
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold mb-3 text-ecto-dark">3/4"</span>
-                    <Counter value={state.neptun34} onChange={(v) => onUpdate({ neptun34: v })} max={32} />
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold mb-3 text-ecto-dark">1"</span>
-                    <Counter value={state.neptun1} onChange={(v) => onUpdate({ neptun1: v })} max={32} />
-                  </div>
+              <div className="space-y-4">
+                <h4 className="font-bold text-sm md:text-base uppercase text-ecto-lightgray tracking-widest mb-2">Сервоприводы Neptun</h4>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Кран 1/2"</span>
+                  <div className="flex-shrink-0"><Counter value={state.neptun12} onChange={(v) => onUpdate({ neptun12: v })} max={32} /></div>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Кран 3/4"</span>
+                  <div className="flex-shrink-0"><Counter value={state.neptun34} onChange={(v) => onUpdate({ neptun34: v })} max={32} /></div>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                  <span className="text-sm md:text-base font-medium pr-2 text-ecto-dark">Кран 1"</span>
+                  <div className="flex-shrink-0"><Counter value={state.neptun1} onChange={(v) => onUpdate({ neptun1: v })} max={32} /></div>
                 </div>
               </div>
             </div>
@@ -1129,18 +1127,17 @@
       return (
         <React.Fragment>
           <div className="min-h-screen flex flex-col font-sans print:hidden bg-[#F9FAFB] text-ecto-dark selection:bg-ecto-gold/20">
-            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" /></header>
-            <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
-              <div className="mb-6 no-print flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="text-gray-500 font-medium text-sm md:text-base flex flex-wrap items-center gap-2">
-                  <a href="https://ectocontrol.ru/" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Главная</a>
-                  <span className="text-gray-400">—</span>
-                  <a href="https://ectocontrol.ru/ready-made-solutions" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Продукция</a>
-                  <span className="text-gray-400">—</span>
-                  <span className="text-gray-400">Конфигуратор</span>
-                </div>
-                <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm md:text-base hover:bg-ecto-dark hover:text-white transition-all w-full sm:w-auto">СБРОСИТЬ</button>
+            <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative md:sticky md:top-0 z-20 shadow-sm no-print">
+              <div className="text-gray-500 font-medium text-sm md:text-base flex flex-wrap items-center gap-2">
+                <a href="https://ectocontrol.ru/" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Главная</a>
+                <span className="text-gray-400">—</span>
+                <a href="https://ectocontrol.ru/ready-made-solutions" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Продукция</a>
+                <span className="text-gray-400">—</span>
+                <span className="text-gray-400">Конфигуратор</span>
               </div>
+              <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm md:text-base hover:bg-ecto-dark hover:text-white transition-all w-full sm:w-auto">СБРОСИТЬ</button>
+            </header>
+            <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-grow lg:w-2/3"><BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={(u)=>setState(p=>({...p,...u}))} /><BoilerRoom state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Zoning state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Safety state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /></div>
                 <div className="lg:w-1/3 relative z-10"><div className="sticky top-24"><Cart items={cartItems} onManualAdd={handleManualAdd} onRemoveItem={handleRemoveItem} /></div></div>
