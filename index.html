@@ -1131,15 +1131,15 @@
           <div className="min-h-screen flex flex-col font-sans print:hidden bg-[#F9FAFB] text-ecto-dark selection:bg-ecto-gold/20">
             <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 py-4 px-4 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print"><img src="https://ectocontrol.ru/catalog/view/theme/ectostroy/image/logo.svg" alt="ectoControl" className="h-8 md:h-10" /></header>
             <main className="flex-grow p-4 md:p-8 max-w-[1440px] mx-auto w-full">
-              <div className="mb-6 no-print flex justify-between items-center">
-                <div className="text-gray-500 font-medium text-base flex items-center gap-2">
+              <div className="mb-6 no-print flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="text-gray-500 font-medium text-sm md:text-base flex flex-wrap items-center gap-2">
                   <a href="https://ectocontrol.ru/" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Главная</a>
                   <span className="text-gray-400">—</span>
                   <a href="https://ectocontrol.ru/ready-made-solutions" className="hover:text-ecto-gold underline underline-offset-4 decoration-1">Продукция</a>
                   <span className="text-gray-400">—</span>
                   <span className="text-gray-400">Конфигуратор</span>
                 </div>
-                <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-base hover:bg-ecto-dark hover:text-white transition-all">СБРОСИТЬ</button>
+                <button onClick={() => setShowResetModal(true)} className="px-6 py-2 border border-ecto-lightgray rounded-full font-bold text-ecto-dark text-sm md:text-base hover:bg-ecto-dark hover:text-white transition-all w-full sm:w-auto">СБРОСИТЬ</button>
               </div>
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-grow lg:w-2/3"><BoilerSection boilers={state.boilers} outdoorSensor={state.outdoorSensor} onUpdate={(u)=>setState(p=>({...p,...u}))} /><BoilerRoom state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Zoning state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /><Safety state={state} onUpdate={(u)=>setState(p=>({...p,...u}))} /></div>
